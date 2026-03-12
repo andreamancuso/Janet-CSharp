@@ -163,24 +163,25 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 ---
 
-## Phase 8: NuGet Packaging & CI/CD
+## Phase 8: NuGet Packaging & CI/CD ✅
 
 *Goal: Publish JanetSharp as a self-contained NuGet package with automated builds.*
 
-* **8.1 NuGet Package Structure**
-* Multi-RID native packaging: `runtimes/win-x64/native/`, `runtimes/linux-x64/native/`, `runtimes/osx-x64/native/`.
-* Package metadata: description, tags, license, repository URL, icon.
-* Ensure `dotnet add package JanetSharp` works out of the box — no manual native build required.
+* **8.1 NuGet Package Structure** ✅
+* Multi-RID native packaging: `runtimes/win-x64/native/`, `runtimes/linux-x64/native/`, `runtimes/osx-x64/native/`, `runtimes/osx-arm64/native/`.
+* Package metadata: description, tags, license, repository URL, readme.
+* `dotnet add package JanetSharp` works out of the box — no manual native build required.
+* Fixed CMakeLists.txt with platform-specific link libraries (`ws2_32`, `m`, `pthread`, `dl`).
 
-* **8.2 CI/CD Pipeline**
-* GitHub Actions workflow: matrix-build the C-shim for Windows, Linux, and macOS.
+* **8.2 CI/CD Pipeline** ✅
+* GitHub Actions workflow (`.github/workflows/ci.yml`): matrix-build the C-shim for Windows, Linux, macOS x64, and macOS arm64.
 * Run `dotnet test` on all platforms.
-* Automate NuGet package generation on tagged releases.
-* Publish to nuget.org.
+* Pack job assembles multi-RID NuGet package on pushes to `main` and version tags.
+* Publish job pushes to nuget.org on `v*` tags using `NUGET_API_KEY` secret.
 
-* **8.3 Versioning Strategy**
-* Semantic versioning aligned with the roadmap phases.
-* Pre-release tags for in-progress phases (e.g., `1.0.0-alpha.1`).
+* **8.3 Versioning Strategy** ✅
+* `Version` property in `Directory.Build.props` (default `0.1.0`).
+* CI derives version from git tags (`v1.0.0` → `1.0.0`) or uses `0.1.0-ci.{run_number}` for main branch builds.
 
 ---
 

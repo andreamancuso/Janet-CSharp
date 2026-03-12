@@ -30,6 +30,9 @@ x86/
 # Native / CMake build
 native/build/
 native/out/
+
+# NuGet runtime natives (assembled in CI)
+runtimes/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake

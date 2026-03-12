@@ -29,8 +29,13 @@ if(WIN32)
     # MSVC: disable secure CRT warnings
     target_compile_definitions(janet_shim PRIVATE _CRT_SECURE_NO_WARNINGS)
     target_compile_options(janet_shim PRIVATE /W3)
+    target_link_libraries(janet_shim PRIVATE ws2_32)
+elseif(APPLE)
+    target_compile_options(janet_shim PRIVATE -fPIC -Wall -Wextra)
+    target_link_libraries(janet_shim PRIVATE m pthread)
 else()
     target_compile_options(janet_shim PRIVATE -fPIC -Wall -Wextra)
+    target_link_libraries(janet_shim PRIVATE m pthread dl)
 endif()
 
 # Install the built library next to the build output for easy pickup by .NET

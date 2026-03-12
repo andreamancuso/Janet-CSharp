@@ -25,19 +25,30 @@
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!-- Copy native shim DLL to output for local development.
+  <!-- Copy native shim to output for local development.
        Searches CLI cmake paths first, then VS IDE CMake integration paths as fallback. -->
   <PropertyGroup>
-    <NativeShimDll Condition="Exists('$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll</NativeShimDll>
-    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll</NativeShimDll>
-    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll</NativeShimDll>
-    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll</NativeShimDll>
+    <!-- Windows -->
+    <NativeShimPath Condition="Exists('$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll</NativeShimPath>
+    <NativeShimPath Condition="'$(NativeShimPath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll</NativeShimPath>
+    <NativeShimPath Condition="'$(NativeShimPath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll</NativeShimPath>
+    <NativeShimPath Condition="'$(NativeShimPath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll</NativeShimPath>
+    <!-- Linux -->
+    <NativeShimPath Condition="'$(NativeShimPath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\libjanet_shim.so')">$(MSBuildThisFileDirectory)..\..\native\build\libjanet_shim.so</NativeShimPath>
+    <!-- macOS -->
+    <NativeShimPath Condition="'$(NativeShimPath)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\libjanet_shim.dylib')">$(MSBuildThisFileDirectory)..\..\native\build\libjanet_shim.dylib</NativeShimPath>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(NativeShimDll)' != ''">
-    <Content Include="$(NativeShimDll)"
+  <ItemGroup Condition="'$(NativeShimPath)' != ''">
+    <Content Include="$(NativeShimPath)"
              CopyToOutputDirectory="PreserveNewest"
-             Link="janet_shim.dll" />
+             Link="%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Include RID-specific native binaries for NuGet packaging.
+       The runtimes/ directory is assembled by CI before running dotnet pack. -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\runtimes')">
+    <None Include="..\..\runtimes\**\*" Pack="true" PackagePath="runtimes" />
   </ItemGroup>
 
 </Project>
