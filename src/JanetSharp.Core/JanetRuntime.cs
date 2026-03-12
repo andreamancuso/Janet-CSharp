@@ -62,6 +62,31 @@ public sealed class JanetRuntime : IDisposable
         return new Janet(rawResult);
     }
 
+    /// <summary>
+    /// Evaluates a Janet expression and returns the result as a JanetFunction.
+    /// Throws if the expression does not evaluate to a function.
+    /// </summary>
+    public JanetFunction GetFunction(string expression)
+    {
+        var result = Eval(expression);
+        return result.AsFunction();
+    }
+
+    /// <summary>
+    /// Registers a C# callback as a named function in the Janet environment.
+    /// The returned JanetCallback must be kept alive (not disposed) as long as
+    /// Janet code may call the function.
+    /// </summary>
+    public JanetCallback Register(string name, JanetCallback.CallbackFunc callback)
+    {
+        CheckThread();
+        CheckDisposed();
+
+        var cb = new JanetCallback(callback);
+        NativeMethods.shim_def(CoreEnvironment, name, cb.Value.RawValue);
+        return cb;
+    }
+
     private void CheckThread()
     {
         if (Environment.CurrentManagedThreadId != _ownerThreadId)

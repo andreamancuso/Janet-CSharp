@@ -114,6 +114,11 @@ public readonly struct Janet : IEquatable<Janet>
     /// </summary>
     public JanetBuffer AsBuffer() => JanetBuffer.Wrap(this);
 
+    /// <summary>
+    /// Wraps this value as a JanetFunction. Only valid for Function type.
+    /// </summary>
+    public JanetFunction AsFunction() => JanetFunction.Wrap(this);
+
     // === Equality ===
 
     public bool Equals(Janet other) => RawValue == other.RawValue;

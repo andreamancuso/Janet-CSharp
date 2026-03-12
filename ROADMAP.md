@@ -50,43 +50,53 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 ---
 
-## Phase 3: Complex Type System & Object Mapping
+## Phase 3: Complex Type System & Object Mapping ✅
 
 *Goal: Allow fluid mapping between C# classes/collections and Janet's rich data structures.*
 
-* **3.1 Strings, Symbols, and Keywords**
-* Implement zero-allocation UTF-8 string conversions using `ReadOnlySpan<byte>` and `MemoryMarshal`.
-* Build wrapper classes: `JanetString`, `JanetSymbol`, `JanetKeyword` inheriting from `JanetValue`.
+* **3.1 Strings, Symbols, and Keywords** ✅
+* Implemented `JanetString`, `JanetSymbol`, `JanetKeyword` inheriting from `JanetValue`.
+* Zero-copy UTF-8 access via `ReadOnlySpan<byte> AsSpan()` and `ToString()` for .NET string conversion.
+* C-shim functions: `shim_wrap_string/symbol/keyword`, `shim_unwrap_string_ptr`, `shim_string_length`.
 
-* **3.2 Tuples and Arrays (Indexed Data)**
-* Implement `JanetArray` implementing `IList<JanetValue>`.
-* Provide methods to push/pop from Janet arrays directly from C#.
-* Implement `JanetTuple` (immutable arrays) mapping.
+* **3.2 Tuples and Arrays (Indexed Data)** ✅
+* Implemented `JanetArray` implementing `IList<Janet>` with push, pop, indexer, enumeration.
+* Implemented `JanetTuple` implementing `IReadOnlyList<Janet>` (immutable).
+* C-shim functions for array CRUD and tuple creation/access.
 
-* **3.3 Tables and Structs (Key-Value Data)**
-* Implement `JanetTable` implementing `IDictionary<JanetValue, JanetValue>`.
-* Map C# `dynamic` or `ExpandoObject` to Janet Tables for rapid prototyping.
+* **3.3 Tables and Structs (Key-Value Data)** ✅
+* Implemented `JanetTable` implementing `IDictionary<Janet, Janet>` with get/set, remove, clear, ContainsKey.
+* Implemented `JanetStruct` implementing `IReadOnlyDictionary<Janet, Janet>` (immutable, created via Eval).
+* Enumeration deferred — requires table/struct iteration support in the shim.
 
-* **3.4 Buffers**
-* Implement C# `Stream` wrappers around Janet Buffers to allow native .NET I/O operations directly into Janet memory space.
+* **3.4 Buffers** ✅
+* Implemented `JanetBuffer` with `WriteByte`, `WriteBytes(ReadOnlySpan<byte>)`, `AsSpan()`, `SetCount`, `EnsureCapacity`.
+* Stream wrapper deferred to a future phase.
+
+* **3.5 Convenience Methods** ✅
+* Added `Janet.From(string)`, implicit conversions (`double`, `int`, `bool`, `string` → `Janet`).
+* Added `AsString()`, `AsArray()`, `AsTuple()`, `AsTable()`, `AsStruct()`, `AsBuffer()` on `Janet` struct.
 
 ---
 
-## Phase 4: Bi-Directional Function Calls
+## Phase 4: Bi-Directional Function Calls ✅
 
 *Goal: Enable Janet to call C# methods, and C# to invoke Janet functions with arguments.*
 
-* **4.1 Invoking Janet from C#**
-* Implement `JanetFunction.Invoke(params JanetValue[] args)`.
-* Handle the C-shim `janet_pcall` response, converting Janet panics into a custom `JanetRuntimeException` in C# containing the Janet stack trace.
+* **4.1 Invoking Janet from C#** ✅
+* Implemented `JanetFunction : JanetValue` with `Invoke(params Janet[] args)` (throwing) and `Invoke(Janet[], out JanetSignal)` (non-throwing).
+* Uses existing `shim_pcall` via `shim_unwrap_function` to extract the `JanetFunction*` pointer.
+* Added `JanetRuntime.GetFunction(string)` convenience method.
 
-* **4.2 Exposing C# to Janet (Callbacks)**
-* Implement an `ExportToJanet` attribute for C# methods.
-* Build a reflection/source-generator tool to automatically generate `JanetCFunction` delegates from C# methods.
-* Implement the Delegate pinning architecture (using `GCHandle` or pinned lists) to prevent the .NET GC from collecting active callbacks.
+* **4.2 Exposing C# to Janet (Callbacks)** ✅
+* Implemented `JanetCallback : IDisposable` with `CallbackFunc` delegate (`ReadOnlySpan<Janet> → Janet`).
+* 64-slot C-side trampoline system (macro-generated) prevents `longjmp` from unwinding through managed frames.
+* Delegates pinned via `GCHandle`; C# exceptions caught and converted to `janet_panicv` calls in C.
+* `JanetRuntime.Register(string, CallbackFunc)` registers named functions in the core environment via `shim_def`.
 
-* **4.3 Type Coercion Pipeline**
-* Build a registry that automatically coerces arguments when Janet calls C#. (e.g., Janet Number -> C# `int`, Janet String -> C# `string`).
+* **4.3 Type Coercion Pipeline** ✅
+* Implemented `JanetConvert.ToJanet(object?)` and `JanetConvert.ToClr<T>(Janet)` for automatic conversion between .NET types and Janet values.
+* Supports: `double`, `int`, `float`, `long`, `bool`, `string`, `null` ↔ Janet Number, Boolean, String, Nil.
 
 ---
 
@@ -108,22 +118,95 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 ---
 
-## Phase 6: Testing, Documentation & Polish
+## Phase 6: README & Quick-Start Documentation
 
-*Goal: Achieve production-readiness.*
+*Goal: Make the project approachable — a new developer should understand what JanetSharp is and how to use it within minutes.*
 
-* **6.1 Comprehensive Test Suite**
-* Write xUnit tests verifying memory bounds, ensuring 0 bytes leaked after aggressive GC cycles.
-* Test cross-thread access (Janet VMs are strictly single-threaded; `JanetRuntime` must enforce thread affinity or implement locking).
+* **6.1 README.md**
+* Project overview, badges (build status, NuGet version, license).
+* Feature summary: what works today (Phases 1–4).
+* Quick-start code sample: init runtime, eval, invoke functions, register callbacks.
+* Installation instructions (NuGet + native shim prerequisites).
+* Link to full docs and ROADMAP.
 
-* **6.2 Documentation & Examples**
-* Write a GitBook/DocFX site.
-* Provide example projects: A Unity game script engine, an ASP.NET Core rules engine, and a console REPL.
-
-* **6.3 CI/CD & Release**
-* Set up GitHub Actions to matrix-build the C-shim for Windows, Linux, and macOS.
-* Automate NuGet package generation and deployment.
+* **6.2 CONTRIBUTING.md**
+* Build instructions (native shim via CMake, .NET build/test).
+* Architecture overview for contributors (shim layer, NaN-boxing, GC rooting).
+* How to add new shim functions end-to-end (C → P/Invoke → C# wrapper → test).
 
 ---
 
-This roadmap covers the entire lifecycle from bits and pointers up to asynchronous coroutines.
+## Phase 7: Comprehensive Documentation
+
+*Goal: Provide full API documentation and usage guides so users can adopt JanetSharp without reading source code.*
+
+* **7.1 API Reference**
+* XML doc comments on all public types and methods (Janet, JanetValue, JanetRuntime, all wrapper types, JanetFunction, JanetCallback, JanetConvert).
+* Generate API reference site via DocFX or similar tooling.
+
+* **7.2 User Guide**
+* Getting Started: installation, first script, basic eval.
+* Working with Types: strings, arrays, tuples, tables, structs, buffers — with code samples.
+* Calling Janet from C#: JanetFunction.Invoke, error handling, signals.
+* Calling C# from Janet: JanetCallback, delegate pinning, exception safety.
+* Type Coercion: JanetConvert usage and supported type mappings.
+* Memory Management: GC rooting rules, when to dispose, common pitfalls.
+
+* **7.3 Examples Project**
+* Standalone example projects demonstrating real-world usage patterns.
+* Console REPL, scripted rules engine, or configuration-driven application.
+
+---
+
+## Phase 8: Testing & Hardening
+
+*Goal: Achieve production-level confidence in correctness and safety.*
+
+* **8.1 Comprehensive Test Suite**
+* Stress tests: aggressive GC cycles, verify 0 bytes leaked.
+* Thread affinity enforcement tests.
+* Callback slot exhaustion and recycling tests.
+* Edge cases: empty collections, nil values in tables, large argument lists.
+
+* **8.2 Cross-Platform Validation**
+* Verify native shim builds and tests pass on Linux (`.so`) and macOS (`.dylib`).
+* Document any platform-specific considerations.
+
+---
+
+## Phase 9: NuGet Packaging & CI/CD
+
+*Goal: Publish JanetSharp as a self-contained NuGet package with automated builds.*
+
+* **9.1 NuGet Package Structure**
+* Multi-RID native packaging: `runtimes/win-x64/native/`, `runtimes/linux-x64/native/`, `runtimes/osx-x64/native/`.
+* Package metadata: description, tags, license, repository URL, icon.
+* Ensure `dotnet add package JanetSharp` works out of the box — no manual native build required.
+
+* **9.2 CI/CD Pipeline**
+* GitHub Actions workflow: matrix-build the C-shim for Windows, Linux, and macOS.
+* Run `dotnet test` on all platforms.
+* Automate NuGet package generation on tagged releases.
+* Publish to nuget.org.
+
+* **9.3 Versioning Strategy**
+* Semantic versioning aligned with the roadmap phases.
+* Pre-release tags for in-progress phases (e.g., `1.0.0-alpha.1`).
+
+---
+
+## Phase 10: Concurrency & Advanced Features
+
+*Goal: Bridge Janet's unique Fiber (coroutine) architecture with .NET's Task Parallel Library (TPL).*
+
+* **10.1 Fiber to Task Mapping**
+* Implement `JanetFiber`.
+* Create an extension method `Task<JanetValue> RunAsync(this JanetFiber fiber)`.
+* Map Janet's `yield` / `resume` state machine to the C# `async/await` state machine, allowing a C# Task to `await` a Janet coroutine.
+
+* **10.2 Custom Abstract Types**
+* Utilize Janet's `Abstract` types to wrap complex C# objects (like Database connections or UI Windows) inside Janet, fully managed by Janet's GC but finalized in C#.
+
+* **10.3 Module Loading & VFS (Virtual File System)**
+* Hook into Janet's `import` mechanism.
+* Allow Janet scripts to load other Janet scripts embedded within .NET Assembly Resources, bypassing the physical disk.

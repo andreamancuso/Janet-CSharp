@@ -177,4 +177,33 @@ internal static partial class NativeMethods
 
     [LibraryImport(LibName)]
     internal static partial void shim_buffer_ensure(long buf, int capacity);
+
+    // === Functions ===
+
+    [LibraryImport(LibName)]
+    internal static partial IntPtr shim_unwrap_function(long x);
+
+    // === Environment Definition ===
+
+    [LibraryImport(LibName, StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial void shim_def(IntPtr env, string name, long val);
+
+    // === Callback System ===
+
+    /// <summary>
+    /// Managed callback delegate called by C trampolines.
+    /// Returns 0 on success, non-zero on error.
+    /// On error, result contains the error value for janet_panicv.
+    /// </summary>
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate int ShimManagedCallback(int argc, IntPtr argv, out long result);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_register_callback(IntPtr cb);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_unregister_callback(int slot);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_wrap_callback(int slot);
 }
