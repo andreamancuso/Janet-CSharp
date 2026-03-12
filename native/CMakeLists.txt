@@ -20,8 +20,16 @@ target_include_directories(janet_shim PRIVATE
 # JANET_BOOTSTRAP: use C-level janet_core_env() without needing the
 # pre-compiled boot image (amalgamation). Gives us all C-level built-in
 # functions which is sufficient for Phase 1.
+#
+# Disable unused subsystems that cause platform-specific issues
+# (e.g. kqueue init crash on macOS ARM64 CI) and aren't needed
+# since JanetSharp has its own P/Invoke layer and enforces single-threading.
 target_compile_definitions(janet_shim PRIVATE
     JANET_BOOTSTRAP
+    JANET_NO_EV
+    JANET_NO_FFI
+    JANET_NO_NET
+    JANET_NO_DYNAMIC_MODULES
 )
 
 # Platform-specific settings
