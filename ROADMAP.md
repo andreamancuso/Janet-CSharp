@@ -118,25 +118,21 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 ---
 
-## Phase 6: Comprehensive Documentation
+## Phase 6: Comprehensive Documentation ✅
 
 *Goal: Provide full API documentation and usage guides so users can adopt JanetSharp without reading source code.*
 
-* **6.1 API Reference**
+* **6.1 API Reference** ✅
 * XML doc comments on all public types and methods (Janet, JanetValue, JanetRuntime, all wrapper types, JanetFunction, JanetCallback, JanetConvert).
-* Generate API reference site via DocFX or similar tooling.
+* Zero CS1591 warnings — all public members fully documented with `<summary>`, `<param>`, `<returns>`, and `<exception>` tags.
+* DocFX site generation deferred — XML docs provide full IntelliSense coverage.
 
-* **6.2 User Guide**
-* Getting Started: installation, first script, basic eval.
-* Working with Types: strings, arrays, tuples, tables, structs, buffers — with code samples.
-* Calling Janet from C#: JanetFunction.Invoke, error handling, signals.
-* Calling C# from Janet: JanetCallback, delegate pinning, exception safety.
-* Type Coercion: JanetConvert usage and supported type mappings.
-* Memory Management: GC rooting rules, when to dispose, common pitfalls.
+* **6.2 User Guide** ✅
+* Six markdown guides in `docs/guide/`: Getting Started, Working with Types, Calling Janet from C#, Calling C# from Janet, Type Coercion, Memory Management.
+* Index page at `docs/README.md` linking all guides and key types.
 
 * **6.3 Examples Project**
-* Standalone example projects demonstrating real-world usage patterns.
-* Console REPL, scripted rules engine, or configuration-driven application.
+* Standalone example projects demonstrating real-world usage patterns. Deferred.
 
 ---
 

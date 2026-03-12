@@ -22,8 +22,10 @@ public class JanetStruct : JanetValue, IReadOnlyDictionary<Janet, Janet>
         return new JanetStruct(value);
     }
 
+    /// <inheritdoc />
     public int Count => NativeMethods.shim_struct_length(Value.RawValue);
 
+    /// <inheritdoc />
     public Janet this[Janet key]
     {
         get
@@ -35,12 +37,14 @@ public class JanetStruct : JanetValue, IReadOnlyDictionary<Janet, Janet>
         }
     }
 
+    /// <inheritdoc />
     public bool ContainsKey(Janet key)
     {
         var result = new Janet(NativeMethods.shim_struct_get(Value.RawValue, key.RawValue));
         return !result.IsNil;
     }
 
+    /// <inheritdoc />
     public bool TryGetValue(Janet key, out Janet value)
     {
         var result = new Janet(NativeMethods.shim_struct_get(Value.RawValue, key.RawValue));
@@ -55,12 +59,18 @@ public class JanetStruct : JanetValue, IReadOnlyDictionary<Janet, Janet>
 
     // === Enumeration (deferred — requires shim iteration support) ===
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Struct key enumeration requires iteration support in the native shim.</exception>
     public IEnumerable<Janet> Keys =>
         throw new NotSupportedException("Struct key enumeration requires iteration support in the native shim (planned for a future phase).");
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Struct value enumeration requires iteration support in the native shim.</exception>
     public IEnumerable<Janet> Values =>
         throw new NotSupportedException("Struct value enumeration requires iteration support in the native shim (planned for a future phase).");
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Struct enumeration requires iteration support in the native shim.</exception>
     public IEnumerator<KeyValuePair<Janet, Janet>> GetEnumerator() =>
         throw new NotSupportedException("Struct enumeration requires iteration support in the native shim (planned for a future phase).");
 

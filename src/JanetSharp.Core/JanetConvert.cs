@@ -7,7 +7,11 @@ public static class JanetConvert
 {
     /// <summary>
     /// Converts a .NET object to a Janet value.
+    /// Supports: null, Janet, double, int, float, long, bool, string.
     /// </summary>
+    /// <param name="value">The .NET value to convert.</param>
+    /// <returns>The equivalent Janet value.</returns>
+    /// <exception cref="ArgumentException">The type is not supported for conversion.</exception>
     public static Janet ToJanet(object? value) => value switch
     {
         null => Janet.Nil,
@@ -23,12 +27,23 @@ public static class JanetConvert
 
     /// <summary>
     /// Converts a Janet value to the specified .NET type.
+    /// Supports: double, int, float, long, bool, string, Janet.
     /// </summary>
+    /// <typeparam name="T">The target .NET type.</typeparam>
+    /// <param name="value">The Janet value to convert.</param>
+    /// <returns>The converted .NET value.</returns>
+    /// <exception cref="InvalidOperationException">The Janet value is nil and the target type is non-nullable.</exception>
+    /// <exception cref="ArgumentException">The target type is not supported for conversion.</exception>
     public static T ToClr<T>(Janet value) => (T)ToClr(value, typeof(T))!;
 
     /// <summary>
     /// Converts a Janet value to the specified .NET type.
     /// </summary>
+    /// <param name="value">The Janet value to convert.</param>
+    /// <param name="targetType">The target .NET type.</param>
+    /// <returns>The converted .NET value, or null for Janet nil.</returns>
+    /// <exception cref="InvalidOperationException">The Janet value is nil and the target type is non-nullable.</exception>
+    /// <exception cref="ArgumentException">The target type is not supported for conversion.</exception>
     public static object? ToClr(Janet value, Type targetType)
     {
         if (value.IsNil)

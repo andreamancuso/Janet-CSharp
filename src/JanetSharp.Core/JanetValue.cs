@@ -66,12 +66,17 @@ public class JanetValue : IDisposable
     /// </summary>
     public JanetType Type => _value.Type;
 
+    /// <inheritdoc />
     public void Dispose()
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Releases the GC root for this value. Safe to call multiple times.
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose; false if called from the finalizer.</param>
     protected virtual void Dispose(bool disposing)
     {
         // Thread-safe: only the first call unroots
@@ -92,5 +97,6 @@ public class JanetValue : IDisposable
         Dispose(disposing: false);
     }
 
+    /// <inheritdoc />
     public override string ToString() => _value.ToString();
 }

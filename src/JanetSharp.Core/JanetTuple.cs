@@ -42,8 +42,10 @@ public class JanetTuple : JanetValue, IReadOnlyList<Janet>
         return new JanetTuple(value);
     }
 
+    /// <inheritdoc />
     public int Count => NativeMethods.shim_tuple_length(Value.RawValue);
 
+    /// <inheritdoc />
     public Janet this[int index]
     {
         get
@@ -54,6 +56,7 @@ public class JanetTuple : JanetValue, IReadOnlyList<Janet>
         }
     }
 
+    /// <inheritdoc />
     public IEnumerator<Janet> GetEnumerator()
     {
         int count = Count;

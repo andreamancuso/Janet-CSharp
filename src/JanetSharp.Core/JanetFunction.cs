@@ -22,6 +22,9 @@ public class JanetFunction : JanetValue
     /// Invokes the function with the given arguments.
     /// Throws JanetException if the function signals an error.
     /// </summary>
+    /// <param name="args">The arguments to pass to the function.</param>
+    /// <returns>The return value of the function.</returns>
+    /// <exception cref="JanetException">The function signaled an error.</exception>
     public Janet Invoke(params Janet[] args)
     {
         var result = Invoke(args, out var signal);
@@ -34,6 +37,9 @@ public class JanetFunction : JanetValue
     /// Invokes the function, returning the signal code.
     /// Does not throw on error — the caller inspects the signal.
     /// </summary>
+    /// <param name="args">The arguments to pass to the function.</param>
+    /// <param name="signal">Receives the signal code from invocation.</param>
+    /// <returns>The return value of the function.</returns>
     public unsafe Janet Invoke(Janet[] args, out JanetSignal signal)
     {
         var fnPtr = NativeMethods.shim_unwrap_function(Value.RawValue);

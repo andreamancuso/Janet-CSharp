@@ -55,6 +55,9 @@ public sealed class JanetRuntime : IDisposable
     /// Evaluates a Janet source string and returns the result.
     /// Throws <see cref="JanetException"/> if evaluation produces an error signal.
     /// </summary>
+    /// <param name="code">The Janet source code to evaluate.</param>
+    /// <returns>The result of evaluating the expression.</returns>
+    /// <exception cref="JanetException">The evaluation produced an error signal.</exception>
     public Janet Eval(string code)
     {
         var result = Eval(code, out var signal);
@@ -67,6 +70,9 @@ public sealed class JanetRuntime : IDisposable
     /// Evaluates a Janet source string, returning the result and signal.
     /// Does not throw on error — the caller inspects the signal.
     /// </summary>
+    /// <param name="code">The Janet source code to evaluate.</param>
+    /// <param name="signal">Receives the signal code from evaluation.</param>
+    /// <returns>The result of evaluating the expression.</returns>
     public Janet Eval(string code, out JanetSignal signal)
     {
         CheckThread();
@@ -81,6 +87,10 @@ public sealed class JanetRuntime : IDisposable
     /// Evaluates a Janet expression and returns the result as a JanetFunction.
     /// Throws if the expression does not evaluate to a function.
     /// </summary>
+    /// <param name="expression">A Janet expression that evaluates to a function.</param>
+    /// <returns>A GC-rooted JanetFunction wrapper.</returns>
+    /// <exception cref="JanetException">The expression produced an error signal.</exception>
+    /// <exception cref="InvalidOperationException">The expression did not evaluate to a function.</exception>
     public JanetFunction GetFunction(string expression)
     {
         var result = Eval(expression);
@@ -92,6 +102,9 @@ public sealed class JanetRuntime : IDisposable
     /// The returned JanetCallback must be kept alive (not disposed) as long as
     /// Janet code may call the function.
     /// </summary>
+    /// <param name="name">The name to register the function under in the Janet environment.</param>
+    /// <param name="callback">The C# callback function to expose to Janet.</param>
+    /// <returns>A JanetCallback that must be kept alive while the function is in use.</returns>
     public JanetCallback Register(string name, JanetCallback.CallbackFunc callback)
     {
         CheckThread();
@@ -115,6 +128,7 @@ public sealed class JanetRuntime : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed)

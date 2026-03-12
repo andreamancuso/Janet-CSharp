@@ -30,10 +30,13 @@ public class JanetArray : JanetValue, IList<Janet>
         return new JanetArray(value);
     }
 
+    /// <inheritdoc />
     public int Count => NativeMethods.shim_array_count(Value.RawValue);
 
+    /// <inheritdoc />
     public bool IsReadOnly => false;
 
+    /// <inheritdoc />
     public Janet this[int index]
     {
         get
@@ -50,13 +53,16 @@ public class JanetArray : JanetValue, IList<Janet>
         }
     }
 
+    /// <inheritdoc />
     public void Add(Janet item) => NativeMethods.shim_array_push(Value.RawValue, item.RawValue);
 
     /// <summary>
     /// Removes and returns the last element of the array.
     /// </summary>
+    /// <returns>The removed element.</returns>
     public Janet Pop() => new Janet(NativeMethods.shim_array_pop(Value.RawValue));
 
+    /// <inheritdoc />
     public void Clear()
     {
         // Pop all elements
@@ -64,6 +70,7 @@ public class JanetArray : JanetValue, IList<Janet>
             NativeMethods.shim_array_pop(Value.RawValue);
     }
 
+    /// <inheritdoc />
     public bool Contains(Janet item)
     {
         int count = Count;
@@ -75,6 +82,7 @@ public class JanetArray : JanetValue, IList<Janet>
         return false;
     }
 
+    /// <inheritdoc />
     public void CopyTo(Janet[] array, int arrayIndex)
     {
         int count = Count;
@@ -82,6 +90,7 @@ public class JanetArray : JanetValue, IList<Janet>
             array[arrayIndex + i] = new Janet(NativeMethods.shim_array_get(Value.RawValue, i));
     }
 
+    /// <inheritdoc />
     public int IndexOf(Janet item)
     {
         int count = Count;
@@ -93,15 +102,22 @@ public class JanetArray : JanetValue, IList<Janet>
         return -1;
     }
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown. Janet arrays do not support insertion at arbitrary indices.</exception>
     public void Insert(int index, Janet item) =>
         throw new NotSupportedException("Janet arrays do not support insertion at arbitrary indices.");
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown. Janet arrays do not support removal at arbitrary indices.</exception>
     public void RemoveAt(int index) =>
         throw new NotSupportedException("Janet arrays do not support removal at arbitrary indices.");
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown. Janet arrays do not support removal by value.</exception>
     public bool Remove(Janet item) =>
         throw new NotSupportedException("Janet arrays do not support removal by value.");
 
+    /// <inheritdoc />
     public IEnumerator<Janet> GetEnumerator()
     {
         int count = Count;

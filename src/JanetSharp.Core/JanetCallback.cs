@@ -30,6 +30,9 @@ public sealed class JanetCallback : IDisposable
     /// <summary>
     /// Creates a new callback wrapping the given C# function.
     /// </summary>
+    /// <param name="callback">The C# function to wrap as a Janet CFunction.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="callback"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">All 64 callback slots are in use.</exception>
     public JanetCallback(CallbackFunc callback)
     {
         _userCallback = callback ?? throw new ArgumentNullException(nameof(callback));
@@ -81,6 +84,7 @@ public sealed class JanetCallback : IDisposable
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed) return;

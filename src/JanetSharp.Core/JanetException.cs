@@ -15,6 +15,11 @@ public class JanetException : Exception
     /// </summary>
     public JanetSignal Signal { get; }
 
+    /// <summary>
+    /// Creates a JanetException from a Janet error value and signal code.
+    /// </summary>
+    /// <param name="errorValue">The Janet value describing the error.</param>
+    /// <param name="signal">The signal code that triggered the exception.</param>
     public JanetException(Janet errorValue, JanetSignal signal)
         : base($"Janet error (signal={signal})")
     {
@@ -22,8 +27,17 @@ public class JanetException : Exception
         Signal = signal;
     }
 
+    /// <summary>
+    /// Creates a JanetException with a message string.
+    /// </summary>
+    /// <param name="message">The error message.</param>
     public JanetException(string message) : base(message) { }
 
+    /// <summary>
+    /// Creates a JanetException with a message and inner exception.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    /// <param name="innerException">The inner exception.</param>
     public JanetException(string message, Exception innerException)
         : base(message, innerException) { }
 }
