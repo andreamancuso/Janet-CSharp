@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>JanetSharp</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- NuGet package metadata -->
     <PackageId>JanetSharp</PackageId>

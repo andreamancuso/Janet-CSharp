@@ -7,8 +7,22 @@ namespace JanetSharp;
 public sealed class JanetRuntime : IDisposable
 {
     private static int _instanceCount;
+    private static int _generation;
     private readonly int _ownerThreadId;
     private bool _disposed;
+
+    /// <summary>
+    /// Returns true if a JanetRuntime instance is currently active (VM initialized).
+    /// Used by JanetValue finalizers to avoid calling into a deinitialized VM.
+    /// </summary>
+    internal static bool IsActive => Volatile.Read(ref _instanceCount) != 0;
+
+    /// <summary>
+    /// Monotonically increasing generation counter. Incremented each time a new
+    /// runtime is created. JanetValue records its creation generation to avoid
+    /// calling shim_gcunroot on a different runtime's VM.
+    /// </summary>
+    internal static int Generation => Volatile.Read(ref _generation);
 
     /// <summary>
     /// The core Janet environment containing built-in functions.
@@ -33,6 +47,7 @@ public sealed class JanetRuntime : IDisposable
             throw new JanetException($"janet_init failed with code {result}");
         }
 
+        Interlocked.Increment(ref _generation);
         CoreEnvironment = NativeMethods.shim_core_env();
     }
 
@@ -106,6 +121,12 @@ public sealed class JanetRuntime : IDisposable
             return;
 
         _disposed = true;
+
+        // Flush pending finalizers so JanetValue objects that are already unreachable
+        // get their shim_gcunroot calls while the VM is still alive.
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+
         NativeMethods.shim_deinit();
         Interlocked.Exchange(ref _instanceCount, 0);
     }

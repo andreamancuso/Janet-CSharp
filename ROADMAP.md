@@ -140,17 +140,24 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 ---
 
-## Phase 7: Testing & Hardening
+## Phase 7: Testing & Hardening ✅
 
 *Goal: Achieve production-level confidence in correctness and safety.*
 
-* **7.1 Comprehensive Test Suite**
-* Stress tests: aggressive GC cycles, verify 0 bytes leaked.
-* Thread affinity enforcement tests.
+* **7.1 Comprehensive Test Suite** ✅
+* Dispose safety tests: double-dispose on all JanetValue subclasses, access after dispose.
+* Type conversion error tests: invalid As* conversions, JanetConvert unsupported types.
 * Callback slot exhaustion and recycling tests.
-* Edge cases: empty collections, nil values in tables, large argument lists.
+* Thread affinity enforcement tests.
+* Edge cases: empty collections, nil values in tables, large argument lists, UTF-8, implicit conversions.
+* Stress tests: GC pressure, callback hot loop, array/table/buffer churn, repeated eval.
 
-* **7.2 Cross-Platform Validation**
+* **7.2 GC Finalizer Race Condition Fix** ✅
+* Added generation counter to `JanetRuntime` — each init increments a monotonic counter.
+* `JanetValue` records its creation generation and only calls `shim_gcunroot` if the same-generation runtime is still active.
+* `JanetRuntime.Dispose()` flushes pending finalizers (`GC.Collect` + `WaitForPendingFinalizers`) before calling `shim_deinit()`.
+
+* **7.3 Cross-Platform Validation**
 * Verify native shim builds and tests pass on Linux (`.so`) and macOS (`.dylib`).
 * Document any platform-specific considerations.
 

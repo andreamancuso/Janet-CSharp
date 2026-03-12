@@ -30,6 +30,7 @@ public class JanetValue : IDisposable
 
     private readonly Janet _value;
     private readonly bool _isRooted;
+    private readonly int _generation; // which runtime generation created this value
     private int _disposed; // 0 = alive, 1 = disposed (for thread-safe CAS)
 
     /// <summary>
@@ -52,6 +53,7 @@ public class JanetValue : IDisposable
     {
         _value = value;
         _isRooted = value.IsGcType;
+        _generation = JanetRuntime.Generation;
 
         if (_isRooted)
         {
@@ -76,7 +78,10 @@ public class JanetValue : IDisposable
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) != 0)
             return;
 
-        if (_isRooted)
+        // Only unroot if the SAME runtime that created this value is still active.
+        // If a different runtime (or no runtime) is active, the memory is already freed
+        // by janet_deinit. Calling shim_gcunroot would be an access violation.
+        if (_isRooted && JanetRuntime.IsActive && JanetRuntime.Generation == _generation)
         {
             NativeMethods.shim_gcunroot(_value.RawValue);
         }
