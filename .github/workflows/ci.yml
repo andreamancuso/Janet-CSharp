@@ -20,10 +20,7 @@ jobs:
           - os: ubuntu-latest
             rid: linux-x64
             lib-path: native/build/libjanet_shim.so
-          - os: macos-13
-            rid: osx-x64
-            lib-path: native/build/libjanet_shim.dylib
-          - os: macos-latest
+          - os: macos-15
             rid: osx-arm64
             lib-path: native/build/libjanet_shim.dylib
 
@@ -82,12 +79,10 @@ jobs:
         run: |
           mkdir -p runtimes/win-x64/native
           mkdir -p runtimes/linux-x64/native
-          mkdir -p runtimes/osx-x64/native
           mkdir -p runtimes/osx-arm64/native
-          cp artifacts/native-win-x64/janet_shim.dll       runtimes/win-x64/native/
+          cp artifacts/native-win-x64/janet_shim.dll        runtimes/win-x64/native/
           cp artifacts/native-linux-x64/libjanet_shim.so    runtimes/linux-x64/native/
-          cp artifacts/native-osx-x64/libjanet_shim.dylib   runtimes/osx-x64/native/
-          cp artifacts/native-osx-arm64/libjanet_shim.dylib  runtimes/osx-arm64/native/
+          cp artifacts/native-osx-arm64/libjanet_shim.dylib runtimes/osx-arm64/native/
 
       - name: Determine version
         id: version

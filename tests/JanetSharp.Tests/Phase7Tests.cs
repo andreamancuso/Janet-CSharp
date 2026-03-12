@@ -429,21 +429,35 @@ public class ThreadAffinityTests : IDisposable
     public void Dispose() => _runtime.Dispose();
 
     [Fact]
-    public async Task Eval_FromWrongThread_Throws()
+    public void Eval_FromWrongThread_Throws()
     {
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => Task.Run(() => _runtime.Eval("(+ 1 2)")));
+        Exception? caught = null;
+        var thread = new Thread(() =>
+        {
+            try { _runtime.Eval("(+ 1 2)"); }
+            catch (Exception ex) { caught = ex; }
+        });
+        thread.Start();
+        thread.Join();
 
-        Assert.Contains("thread", ex.Message, StringComparison.OrdinalIgnoreCase);
+        var ioe = Assert.IsType<InvalidOperationException>(caught);
+        Assert.Contains("thread", ioe.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task Register_FromWrongThread_Throws()
+    public void Register_FromWrongThread_Throws()
     {
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => Task.Run(() => _runtime.Register("bad", _ => Janet.Nil)));
+        Exception? caught = null;
+        var thread = new Thread(() =>
+        {
+            try { _runtime.Register("bad", _ => Janet.Nil); }
+            catch (Exception ex) { caught = ex; }
+        });
+        thread.Start();
+        thread.Join();
 
-        Assert.Contains("thread", ex.Message, StringComparison.OrdinalIgnoreCase);
+        var ioe = Assert.IsType<InvalidOperationException>(caught);
+        Assert.Contains("thread", ioe.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

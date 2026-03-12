@@ -168,13 +168,13 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 *Goal: Publish JanetSharp as a self-contained NuGet package with automated builds.*
 
 * **8.1 NuGet Package Structure** ✅
-* Multi-RID native packaging: `runtimes/win-x64/native/`, `runtimes/linux-x64/native/`, `runtimes/osx-x64/native/`, `runtimes/osx-arm64/native/`.
+* Multi-RID native packaging: `runtimes/win-x64/native/`, `runtimes/linux-x64/native/`, `runtimes/osx-arm64/native/`.
 * Package metadata: description, tags, license, repository URL, readme.
 * `dotnet add package JanetSharp` works out of the box — no manual native build required.
 * Fixed CMakeLists.txt with platform-specific link libraries (`ws2_32`, `m`, `pthread`, `dl`).
 
 * **8.2 CI/CD Pipeline** ✅
-* GitHub Actions workflow (`.github/workflows/ci.yml`): matrix-build the C-shim for Windows, Linux, macOS x64, and macOS arm64.
+* GitHub Actions workflow (`.github/workflows/ci.yml`): matrix-build the C-shim for Windows, Linux, and macOS arm64.
 * Run `dotnet test` on all platforms.
 * Pack job assembles multi-RID NuGet package on pushes to `main` and version tags.
 * Publish job pushes to nuget.org on `v*` tags using `NUGET_API_KEY` secret.
