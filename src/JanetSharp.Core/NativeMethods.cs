@@ -75,4 +75,106 @@ internal static partial class NativeMethods
 
     [LibraryImport(LibName)]
     internal static partial int shim_truthy(long x);
+
+    // === Strings / Symbols / Keywords ===
+
+    [LibraryImport(LibName, StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial long shim_wrap_string(string s);
+
+    [LibraryImport(LibName, StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial long shim_wrap_symbol(string s);
+
+    [LibraryImport(LibName, StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial long shim_wrap_keyword(string s);
+
+    [LibraryImport(LibName)]
+    internal static partial IntPtr shim_unwrap_string_ptr(long s);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_string_length(long s);
+
+    // === Arrays ===
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_array_new(int capacity);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_array_push(long arr, long val);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_array_pop(long arr);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_array_get(long arr, int idx);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_array_set(long arr, int idx, long val);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_array_count(long arr);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_array_ensure(long arr, int cap);
+
+    // === Tuples ===
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_tuple_n(IntPtr values, int n);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_tuple_get(long tup, int idx);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_tuple_length(long tup);
+
+    // === Tables ===
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_table_new(int capacity);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_table_get(long tbl, long key);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_table_put(long tbl, long key, long val);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_table_remove(long tbl, long key);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_table_count(long tbl);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_table_clear(long tbl);
+
+    // === Structs (immutable tables) ===
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_struct_get(long st, long key);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_struct_length(long st);
+
+    // === Buffers ===
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_buffer_new(int capacity);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_buffer_push_bytes(long buf, IntPtr data, int len);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_buffer_push_u8(long buf, byte byteVal);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_buffer_count(long buf);
+
+    [LibraryImport(LibName)]
+    internal static partial IntPtr shim_buffer_data_ptr(long buf);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_buffer_setcount(long buf, int count);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_buffer_ensure(long buf, int capacity);
 }

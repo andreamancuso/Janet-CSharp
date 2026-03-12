@@ -6,13 +6,15 @@ Repo name is `Janet-CSharp`; library/namespace/NuGet name is `JanetSharp`.
 
 ## Build Instructions
 
-### Native shim (requires VS 2022 Developer Command Prompt)
+### Native shim (requires VS 2022 Build Tools)
+In Claude Code's Git Bash shell, `cmake` is not on PATH. Use `cmd.exe //c` to invoke it:
 ```bash
-cd native
-cmake -B build
-cmake --build build --config Release
+cmd.exe //c "cd /d C:\dev\Janet-CSharp\native && cmake -B build"
+cmd.exe //c "cd /d C:\dev\Janet-CSharp\native && cmake --build build --config Release"
 ```
 Produces `native/build/Release/janet_shim.dll` (or `.so`/`.dylib`).
+
+The .csproj auto-discovers the DLL from CLI cmake paths first (`native/build/Release`, then `Debug`), falling back to VS IDE paths (`native/out/build/x64-*`).
 
 ### .NET
 ```bash

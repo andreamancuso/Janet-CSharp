@@ -11,12 +11,12 @@
   </ItemGroup>
 
   <!-- Copy native shim DLL to output for local development.
-       Searches multiple possible build output locations (VS IDE, cmake CLI). -->
+       Searches CLI cmake paths first, then VS IDE CMake integration paths as fallback. -->
   <PropertyGroup>
-    <NativeShimDll Condition="Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll</NativeShimDll>
-    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll</NativeShimDll>
-    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll</NativeShimDll>
+    <NativeShimDll Condition="Exists('$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll</NativeShimDll>
     <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll</NativeShimDll>
+    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll</NativeShimDll>
+    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll</NativeShimDll>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(NativeShimDll)' != ''">

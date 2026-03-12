@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace JanetSharp;
 
@@ -27,6 +28,15 @@ public readonly struct Janet : IEquatable<Janet>
     public static Janet From(bool value) => new(NativeMethods.shim_wrap_boolean(value ? 1 : 0));
 
     public static Janet From(int value) => new(NativeMethods.shim_wrap_integer(value));
+
+    public static Janet From(string value) => new(NativeMethods.shim_wrap_string(value));
+
+    // === Implicit Conversions ===
+
+    public static implicit operator Janet(double value) => From(value);
+    public static implicit operator Janet(int value) => From(value);
+    public static implicit operator Janet(bool value) => From(value);
+    public static implicit operator Janet(string value) => From(value);
 
     // === Type Inspection ===
 
@@ -65,6 +75,44 @@ public readonly struct Janet : IEquatable<Janet>
             throw new InvalidOperationException($"Cannot unwrap {Type} as Integer.");
         return NativeMethods.shim_unwrap_integer(RawValue);
     }
+
+    /// <summary>
+    /// Unwraps this value as a .NET string. Only valid for String, Symbol, or Keyword types.
+    /// </summary>
+    public unsafe string AsString()
+    {
+        if (Type is not (JanetType.String or JanetType.Symbol or JanetType.Keyword))
+            throw new InvalidOperationException($"Cannot unwrap {Type} as string.");
+        int len = NativeMethods.shim_string_length(RawValue);
+        if (len == 0) return string.Empty;
+        var ptr = NativeMethods.shim_unwrap_string_ptr(RawValue);
+        return Encoding.UTF8.GetString(new ReadOnlySpan<byte>((void*)ptr, len));
+    }
+
+    /// <summary>
+    /// Wraps this value as a JanetArray. Only valid for Array type.
+    /// </summary>
+    public JanetArray AsArray() => JanetArray.Wrap(this);
+
+    /// <summary>
+    /// Wraps this value as a JanetTuple. Only valid for Tuple type.
+    /// </summary>
+    public JanetTuple AsTuple() => JanetTuple.Wrap(this);
+
+    /// <summary>
+    /// Wraps this value as a JanetTable. Only valid for Table type.
+    /// </summary>
+    public JanetTable AsTable() => JanetTable.Wrap(this);
+
+    /// <summary>
+    /// Wraps this value as a JanetStruct. Only valid for Struct type.
+    /// </summary>
+    public JanetStruct AsStruct() => JanetStruct.Wrap(this);
+
+    /// <summary>
+    /// Wraps this value as a JanetBuffer. Only valid for Buffer type.
+    /// </summary>
+    public JanetBuffer AsBuffer() => JanetBuffer.Wrap(this);
 
     // === Equality ===
 
