@@ -4,10 +4,24 @@
     <TargetFramework>net9.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>JanetSharp</RootNamespace>
+
+    <!-- NuGet package metadata -->
+    <PackageId>JanetSharp</PackageId>
+    <Description>High-performance .NET bridge for embedding the Janet programming language in C# applications. Provides safe interop, full type mapping, bi-directional function calls, and automatic GC management.</Description>
+    <Authors>Andrea Mancuso</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/andreamancuso/Janet-CSharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>janet;scripting;interop;embedding;language-bridge</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="JanetSharp.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <!-- Copy native shim DLL to output for local development.
