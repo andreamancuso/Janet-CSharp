@@ -5,7 +5,6 @@ namespace JanetSharp;
 /// <summary>
 /// A GC-rooted wrapper around a Janet struct (immutable hash map).
 /// Implements IReadOnlyDictionary&lt;Janet, Janet&gt; for .NET interop.
-/// Note: Enumeration (Keys, Values, GetEnumerator) is deferred — requires struct iteration support in the shim.
 /// </summary>
 public class JanetStruct : JanetValue, IReadOnlyDictionary<Janet, Janet>
 {
@@ -57,22 +56,58 @@ public class JanetStruct : JanetValue, IReadOnlyDictionary<Janet, Janet>
         return true;
     }
 
-    // === Enumeration (deferred — requires shim iteration support) ===
+    // === Enumeration ===
 
     /// <inheritdoc />
-    /// <exception cref="NotSupportedException">Struct key enumeration requires iteration support in the native shim.</exception>
-    public IEnumerable<Janet> Keys =>
-        throw new NotSupportedException("Struct key enumeration requires iteration support in the native shim (planned for a future phase).");
+    public IEnumerable<Janet> Keys
+    {
+        get
+        {
+            CollectEntries(out var keys, out _);
+            return keys;
+        }
+    }
 
     /// <inheritdoc />
-    /// <exception cref="NotSupportedException">Struct value enumeration requires iteration support in the native shim.</exception>
-    public IEnumerable<Janet> Values =>
-        throw new NotSupportedException("Struct value enumeration requires iteration support in the native shim (planned for a future phase).");
+    public IEnumerable<Janet> Values
+    {
+        get
+        {
+            CollectEntries(out _, out var values);
+            return values;
+        }
+    }
 
     /// <inheritdoc />
-    /// <exception cref="NotSupportedException">Struct enumeration requires iteration support in the native shim.</exception>
-    public IEnumerator<KeyValuePair<Janet, Janet>> GetEnumerator() =>
-        throw new NotSupportedException("Struct enumeration requires iteration support in the native shim (planned for a future phase).");
+    public IEnumerator<KeyValuePair<Janet, Janet>> GetEnumerator()
+    {
+        CollectEntries(out var keys, out var values);
+        for (int i = 0; i < keys.Length; i++)
+            yield return new KeyValuePair<Janet, Janet>(keys[i], values[i]);
+    }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    private void CollectEntries(out Janet[] keys, out Janet[] values)
+    {
+        int count = Count;
+        if (count == 0)
+        {
+            keys = [];
+            values = [];
+            return;
+        }
+
+        var rawKeys = new long[count];
+        var rawValues = new long[count];
+        int written = NativeMethods.shim_dictionary_collect(Value.RawValue, rawKeys, rawValues, count);
+
+        keys = new Janet[written];
+        values = new Janet[written];
+        for (int i = 0; i < written; i++)
+        {
+            keys[i] = new Janet(rawKeys[i]);
+            values[i] = new Janet(rawValues[i]);
+        }
+    }
 }

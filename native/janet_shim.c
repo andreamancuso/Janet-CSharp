@@ -252,6 +252,36 @@ SHIM_EXPORT int32_t shim_struct_length(Janet st) {
     return janet_struct_length(janet_unwrap_struct(st));
 }
 
+/* === Dictionary Iteration (Tables & Structs) === */
+
+/*
+ * shim_dictionary_collect: Collect all key-value pairs from a table or struct.
+ *
+ * Uses janet_dictionary_view + janet_dictionary_next to iterate the backing
+ * hash map and write raw Janet values into pre-allocated arrays.
+ * Works for both JanetTable and JanetStruct types.
+ *
+ * Returns: number of entries written.
+ */
+SHIM_EXPORT int32_t shim_dictionary_collect(Janet dict, Janet *keys_out, Janet *values_out, int32_t max_count) {
+    const JanetKV *kvs = NULL;
+    int32_t len = 0, cap = 0;
+
+    if (!janet_dictionary_view(dict, &kvs, &len, &cap))
+        return 0;
+
+    const JanetKV *kv = NULL;
+    int32_t written = 0;
+
+    while ((kv = janet_dictionary_next(kvs, cap, kv)) != NULL && written < max_count) {
+        keys_out[written] = kv->key;
+        values_out[written] = kv->value;
+        written++;
+    }
+
+    return written;
+}
+
 /* === Buffers === */
 
 SHIM_EXPORT Janet shim_buffer_new(int32_t capacity) {

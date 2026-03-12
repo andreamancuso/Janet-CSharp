@@ -65,9 +65,9 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 * C-shim functions for array CRUD and tuple creation/access.
 
 * **3.3 Tables and Structs (Key-Value Data)** ✅
-* Implemented `JanetTable` implementing `IDictionary<Janet, Janet>` with get/set, remove, clear, ContainsKey.
-* Implemented `JanetStruct` implementing `IReadOnlyDictionary<Janet, Janet>` (immutable, created via Eval).
-* Enumeration deferred — requires table/struct iteration support in the shim.
+* Implemented `JanetTable` implementing `IDictionary<Janet, Janet>` with get/set, remove, clear, ContainsKey, Keys, Values, GetEnumerator, CopyTo.
+* Implemented `JanetStruct` implementing `IReadOnlyDictionary<Janet, Janet>` (immutable, created via Eval) with Keys, Values, GetEnumerator.
+* Dictionary iteration via `shim_dictionary_collect` — snapshot-based enumeration using `janet_dictionary_next`.
 
 * **3.4 Buffers** ✅
 * Implemented `JanetBuffer` with `WriteByte`, `WriteBytes(ReadOnlySpan<byte>)`, `AsSpan()`, `SetCount`, `EnsureCapacity`.

@@ -418,6 +418,80 @@ public class JanetTableTests : IDisposable
         Assert.Equal(100.0, tbl[Janet.From(1.0)].AsNumber());
         Assert.Equal(200.0, tbl[Janet.From(2.0)].AsNumber());
     }
+
+    [Fact]
+    public void GetEnumerator_EmptyTable_NoEntries()
+    {
+        using var tbl = JanetTable.Create();
+        var entries = new List<KeyValuePair<Janet, Janet>>();
+        foreach (var kv in tbl)
+            entries.Add(kv);
+        Assert.Empty(entries);
+    }
+
+    [Fact]
+    public void GetEnumerator_ReturnsAllEntries()
+    {
+        using var tbl = JanetTable.Create();
+        tbl[Janet.From("a")] = Janet.From(1.0);
+        tbl[Janet.From("b")] = Janet.From(2.0);
+        tbl[Janet.From("c")] = Janet.From(3.0);
+
+        var dict = new Dictionary<string, double>();
+        foreach (var kv in tbl)
+            dict[kv.Key.AsString()] = kv.Value.AsNumber();
+
+        Assert.Equal(3, dict.Count);
+        Assert.Equal(1.0, dict["a"]);
+        Assert.Equal(2.0, dict["b"]);
+        Assert.Equal(3.0, dict["c"]);
+    }
+
+    [Fact]
+    public void Keys_ReturnsAllKeys()
+    {
+        using var tbl = JanetTable.Create();
+        tbl[Janet.From("x")] = Janet.From(10.0);
+        tbl[Janet.From("y")] = Janet.From(20.0);
+
+        var keys = tbl.Keys.Select(k => k.AsString()).OrderBy(k => k).ToList();
+        Assert.Equal(["x", "y"], keys);
+    }
+
+    [Fact]
+    public void Values_ReturnsAllValues()
+    {
+        using var tbl = JanetTable.Create();
+        tbl[Janet.From("a")] = Janet.From(10.0);
+        tbl[Janet.From("b")] = Janet.From(20.0);
+
+        var values = tbl.Values.Select(v => v.AsNumber()).OrderBy(v => v).ToList();
+        Assert.Equal([10.0, 20.0], values);
+    }
+
+    [Fact]
+    public void CopyTo_Works()
+    {
+        using var tbl = JanetTable.Create();
+        tbl[Janet.From("k")] = Janet.From(99.0);
+
+        var array = new KeyValuePair<Janet, Janet>[3];
+        tbl.CopyTo(array, 1);
+
+        Assert.Equal("k", array[1].Key.AsString());
+        Assert.Equal(99.0, array[1].Value.AsNumber());
+    }
+
+    [Fact]
+    public void Linq_ToList_Works()
+    {
+        using var tbl = JanetTable.Create();
+        tbl[Janet.From("p")] = Janet.From(1.0);
+        tbl[Janet.From("q")] = Janet.From(2.0);
+
+        var list = tbl.ToList();
+        Assert.Equal(2, list.Count);
+    }
 }
 
 // === JanetStruct Tests ===
@@ -466,6 +540,54 @@ public class JanetStructTests2 : IDisposable
         using var missing = JanetKeyword.Create("missing");
 
         Assert.Throws<KeyNotFoundException>(() => st[missing.Value]);
+    }
+
+    [Fact]
+    public void GetEnumerator_ReturnsAllEntries()
+    {
+        var result = _runtime.Eval("(struct :a 1 :b 2 :c 3)");
+        using var st = result.AsStruct();
+
+        var dict = new Dictionary<string, double>();
+        foreach (var kv in st)
+            dict[kv.Key.AsString()] = kv.Value.AsNumber();
+
+        Assert.Equal(3, dict.Count);
+        Assert.Equal(1.0, dict["a"]);
+        Assert.Equal(2.0, dict["b"]);
+        Assert.Equal(3.0, dict["c"]);
+    }
+
+    [Fact]
+    public void Keys_ReturnsAllKeys()
+    {
+        var result = _runtime.Eval("(struct :x 10 :y 20)");
+        using var st = result.AsStruct();
+
+        var keys = st.Keys.Select(k => k.AsString()).OrderBy(k => k).ToList();
+        Assert.Equal(["x", "y"], keys);
+    }
+
+    [Fact]
+    public void Values_ReturnsAllValues()
+    {
+        var result = _runtime.Eval("(struct :x 10 :y 20)");
+        using var st = result.AsStruct();
+
+        var values = st.Values.Select(v => v.AsNumber()).OrderBy(v => v).ToList();
+        Assert.Equal([10.0, 20.0], values);
+    }
+
+    [Fact]
+    public void Foreach_EmptyStruct_NoEntries()
+    {
+        var result = _runtime.Eval("(struct)");
+        using var st = result.AsStruct();
+
+        var entries = new List<KeyValuePair<Janet, Janet>>();
+        foreach (var kv in st)
+            entries.Add(kv);
+        Assert.Empty(entries);
     }
 }
 

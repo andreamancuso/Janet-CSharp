@@ -140,9 +140,15 @@ tbl.Clear();
 
 // Count
 int count = tbl.Count;
-```
 
-> **Note:** Table enumeration (Keys, Values, GetEnumerator) is not yet supported — it requires iteration support in the native shim (planned for a future phase).
+// Enumerate
+foreach (var kv in tbl)
+    Console.WriteLine($"{kv.Key.AsString()} = {kv.Value.AsNumber()}");
+
+// Keys and Values
+ICollection<Janet> keys = tbl.Keys;
+ICollection<Janet> values = tbl.Values;
+```
 
 ## Structs
 
@@ -155,9 +161,11 @@ using var st = result.AsStruct();
 Janet x = st[Janet.From("x")];                  // 1.0
 bool has = st.ContainsKey(Janet.From("y"));      // true
 int count = st.Count;                            // 2
-```
 
-> **Note:** Struct enumeration is not yet supported (same as tables).
+// Enumerate
+foreach (var kv in st)
+    Console.WriteLine($"{kv.Key.AsString()} = {kv.Value.AsNumber()}");
+```
 
 ## Buffers
 

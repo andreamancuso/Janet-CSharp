@@ -155,6 +155,11 @@ internal static partial class NativeMethods
     [LibraryImport(LibName)]
     internal static partial int shim_struct_length(long st);
 
+    // === Dictionary Iteration (Tables & Structs) ===
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_dictionary_collect(long dict, long[] keysOut, long[] valuesOut, int maxCount);
+
     // === Buffers ===
 
     [LibraryImport(LibName)]

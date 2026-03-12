@@ -1,11 +1,11 @@
 using System.Collections;
+using System.Collections.ObjectModel;
 
 namespace JanetSharp;
 
 /// <summary>
 /// A GC-rooted wrapper around a Janet table (mutable hash map).
 /// Implements IDictionary&lt;Janet, Janet&gt; for .NET interop.
-/// Note: Enumeration (Keys, Values, GetEnumerator) is deferred — requires table iteration support in the shim.
 /// </summary>
 public class JanetTable : JanetValue, IDictionary<Janet, Janet>
 {
@@ -83,17 +83,27 @@ public class JanetTable : JanetValue, IDictionary<Janet, Janet>
     /// <inheritdoc />
     public void Clear() => NativeMethods.shim_table_clear(Value.RawValue);
 
-    // === IDictionary<> enumeration members (deferred — require shim iteration support) ===
+    // === IDictionary<> enumeration members ===
 
     /// <inheritdoc />
-    /// <exception cref="NotSupportedException">Table key enumeration requires iteration support in the native shim.</exception>
-    public ICollection<Janet> Keys =>
-        throw new NotSupportedException("Table key enumeration requires iteration support in the native shim (planned for a future phase).");
+    public ICollection<Janet> Keys
+    {
+        get
+        {
+            CollectEntries(out var keys, out _);
+            return new ReadOnlyCollection<Janet>(keys);
+        }
+    }
 
     /// <inheritdoc />
-    /// <exception cref="NotSupportedException">Table value enumeration requires iteration support in the native shim.</exception>
-    public ICollection<Janet> Values =>
-        throw new NotSupportedException("Table value enumeration requires iteration support in the native shim (planned for a future phase).");
+    public ICollection<Janet> Values
+    {
+        get
+        {
+            CollectEntries(out _, out var values);
+            return new ReadOnlyCollection<Janet>(values);
+        }
+    }
 
     /// <inheritdoc />
     public void Add(KeyValuePair<Janet, Janet> item) => Add(item.Key, item.Value);
@@ -107,9 +117,17 @@ public class JanetTable : JanetValue, IDictionary<Janet, Janet>
     }
 
     /// <inheritdoc />
-    /// <exception cref="NotSupportedException">Table enumeration requires iteration support in the native shim.</exception>
-    public void CopyTo(KeyValuePair<Janet, Janet>[] array, int arrayIndex) =>
-        throw new NotSupportedException("Table enumeration requires iteration support in the native shim.");
+    public void CopyTo(KeyValuePair<Janet, Janet>[] array, int arrayIndex)
+    {
+        ArgumentNullException.ThrowIfNull(array);
+        int count = Count;
+        if (arrayIndex < 0 || arrayIndex + count > array.Length)
+            throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+
+        CollectEntries(out var keys, out var values);
+        for (int i = 0; i < keys.Length; i++)
+            array[arrayIndex + i] = new KeyValuePair<Janet, Janet>(keys[i], values[i]);
+    }
 
     /// <inheritdoc />
     public bool Remove(KeyValuePair<Janet, Janet> item)
@@ -120,9 +138,35 @@ public class JanetTable : JanetValue, IDictionary<Janet, Janet>
     }
 
     /// <inheritdoc />
-    /// <exception cref="NotSupportedException">Table enumeration requires iteration support in the native shim.</exception>
-    public IEnumerator<KeyValuePair<Janet, Janet>> GetEnumerator() =>
-        throw new NotSupportedException("Table enumeration requires iteration support in the native shim (planned for a future phase).");
+    public IEnumerator<KeyValuePair<Janet, Janet>> GetEnumerator()
+    {
+        CollectEntries(out var keys, out var values);
+        for (int i = 0; i < keys.Length; i++)
+            yield return new KeyValuePair<Janet, Janet>(keys[i], values[i]);
+    }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    private void CollectEntries(out Janet[] keys, out Janet[] values)
+    {
+        int count = Count;
+        if (count == 0)
+        {
+            keys = [];
+            values = [];
+            return;
+        }
+
+        var rawKeys = new long[count];
+        var rawValues = new long[count];
+        int written = NativeMethods.shim_dictionary_collect(Value.RawValue, rawKeys, rawValues, count);
+
+        keys = new Janet[written];
+        values = new Janet[written];
+        for (int i = 0; i < written; i++)
+        {
+            keys[i] = new Janet(rawKeys[i]);
+            values[i] = new Janet(rawValues[i]);
+        }
+    }
 }
