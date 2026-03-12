@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>JanetSharp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JanetSharp.Tests" />
+  </ItemGroup>
+
+  <!-- Copy native shim DLL to output for local development.
+       Searches multiple possible build output locations (VS IDE, cmake CLI). -->
+  <PropertyGroup>
+    <NativeShimDll Condition="Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Debug\janet_shim.dll</NativeShimDll>
+    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\out\build\x64-Release\janet_shim.dll</NativeShimDll>
+    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Release\janet_shim.dll</NativeShimDll>
+    <NativeShimDll Condition="'$(NativeShimDll)' == '' And Exists('$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll')">$(MSBuildThisFileDirectory)..\..\native\build\Debug\janet_shim.dll</NativeShimDll>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(NativeShimDll)' != ''">
+    <Content Include="$(NativeShimDll)"
+             CopyToOutputDirectory="PreserveNewest"
+             Link="janet_shim.dll" />
+  </ItemGroup>
+
+</Project>
