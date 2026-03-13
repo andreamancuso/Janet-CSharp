@@ -264,10 +264,13 @@ JanetSharp originally compiled Janet's `src/core/*.c` files with the `JANET_BOOT
 * Updated `CONTRIBUTING.md`: replaced outdated phase-based test file list with current feature-based organization (12 files).
 * Migration guide deferred — no external users yet (pre-1.0, no NuGet consumers). The transition is fully backward-compatible; no user code changes required.
 
-* **10.7 Performance Baseline**
-* Benchmark the amalgamation build vs. the bootstrap build:
-  * Startup time (`janet_init` + `janet_core_env` — image unmarshal vs. procedural registration).
-  * DLL size (amalgamated `janet.c` is ~30K lines vs. individual core files).
-  * Eval latency for simple expressions.
-  * Memory footprint (full stdlib environment is larger).
-* Document results and set performance baselines for future optimization.
+* ✅ **10.7 Performance Baseline**
+* Created `benchmarks/JanetSharp.Benchmarks` project with BenchmarkDotNet.
+* Benchmark classes: `StartupBenchmarks`, `EvalBenchmarks`, `FunctionCallBenchmarks` — all with `[MemoryDiagnoser]`.
+* Key results (Intel i7-9750H, .NET 9.0.13, Windows 11):
+  * **Startup**: 1.74 ms (janet_init + image unmarshal + core_env), 440 B managed allocation.
+  * **Eval**: 3.2 us (arithmetic) → 68 us (map/filter over 100 elements). Zero managed allocations.
+  * **Function invoke**: ~880 ns median for pre-resolved `+` function call.
+  * **Callback round-trip**: ~3.96 us (includes eval parse overhead; ~0.8 us for the C#↔Janet boundary).
+  * **DLL size**: 661 KB (`janet_shim.dll`, Release, x64).
+* Full results documented in `docs/PERFORMANCE.md`.
