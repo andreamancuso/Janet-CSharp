@@ -3,7 +3,7 @@ using JanetSharp;
 
 namespace JanetSharp.Tests;
 
-// === Custom Abstract Type Tests (9.2) ===
+// === Custom Abstract Type Tests ===
 
 public class AbstractTests : IDisposable
 {

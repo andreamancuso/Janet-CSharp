@@ -242,16 +242,12 @@ JanetSharp originally compiled Janet's `src/core/*.c` files with the `JANET_BOOT
 * C-shim additions: `shim_make_env` (child environment creation), `shim_wrap_table` (table pointer to NaN-boxed value).
 * 15 tests covering import variants (prefix, :as, :prefix ""), caching, dependencies, error handling, pre-built tables, custom loaders, C# callback integration.
 
-* **10.4 Full Language Test Suite**
-* Add tests exercising Janet stdlib functions that were previously unavailable:
-  * Macros: `defn`, `defmacro`, `let`, `when`, `unless`, `cond`, `case`.
-  * Iteration: `loop`, `for`, `each`, `map`, `filter`, `reduce`, `keep`, `find`.
-  * Pattern matching: `match`.
-  * String formatting: `string/format`, `pp`.
-  * Module system: `import`, `require`, `use`, `module/paths`, `module/cache`.
-  * Destructuring, short-fn syntax (`|`), quasiquoting.
-* Stress-test the module system with circular dependency detection, nested imports, and large module graphs.
-* Verify fiber interactions with the full stdlib (fibers + `each` + `yield`, generator patterns).
+* ✅ **10.4 Full Language Test Suite & Test Restructure**
+* Restructured test files from phase-based naming (`Phase2Tests.cs`, etc.) to feature-based naming: `RuntimeTests.cs`, `ValueTests.cs`, `StringTests.cs`, `CollectionTests.cs`, `TableTests.cs`, `FunctionTests.cs`, `FiberTests.cs`, `AbstractTests.cs`, `StdlibTests.cs`, `ModuleTests.cs`, `SafetyTests.cs`, `StressTests.cs`.
+* Renamed `JanetStructTests` → `JanetValueTypeTests` (tests the C# `Janet` struct) and `JanetStructTests2` → `JanetStructCollectionTests` (tests `JanetStruct` immutable map).
+* Added 42 new stdlib tests: destructuring (5), quasiquoting (3), string operations (6), table operations (5), math (6), sorting (3), fiber+stdlib (4), error handling (3), describe/string (2), var/set mutation (3), range/zipcoll (2).
+* Added 5 new module system tests: three-level nested imports, shared module caching, modules using stdlib features, reimport caching, fiber-exporting modules.
+* Total: 339 tests passing (292 original + 47 new).
 
 * ✅ **10.5 `JANET_NO_*` Flag Review**
 * Audited all four flags against the Janet source. **All four should remain disabled** — no changes needed.

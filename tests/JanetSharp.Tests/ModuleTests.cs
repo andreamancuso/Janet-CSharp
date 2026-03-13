@@ -3,7 +3,7 @@ using JanetSharp;
 
 namespace JanetSharp.Tests;
 
-// === Module System Tests (Phase 10.3) ===
+// === Module System Tests ===
 // These tests verify that C#-registered modules are discoverable
 // via Janet's native (import) syntax.
 
@@ -236,5 +236,114 @@ public class ModuleSystemTests : IDisposable
         Assert.False(_runtime.Modules.IsModuleCached("checkmod"));
         _runtime.Modules.AddModule("checkmod", "(def x 1)");
         Assert.True(_runtime.Modules.IsModuleCached("checkmod"));
+    }
+
+    // ============================================================
+    // Phase 10.4: Extended Module System Tests
+    // ============================================================
+
+    [Fact]
+    public void NestedThreeLevelImports()
+    {
+        _runtime.Modules.AddModule("level1", @"
+            (defn base-val [] 10)
+        ");
+        _runtime.Modules.AddModule("level2", @"
+            (import level1)
+            (defn mid-val [] (+ (level1/base-val) 5))
+        ");
+        _runtime.Modules.AddModule("level3", @"
+            (import level2)
+            (defn top-val [] (* (level2/mid-val) 2))
+        ");
+        var result = _runtime.Eval(@"
+            (import level3)
+            (level3/top-val)
+        ");
+        // (10 + 5) * 2 = 30
+        Assert.Equal(30.0, result.AsNumber());
+    }
+
+    [Fact]
+    public void SameModuleImportedFromMultiple()
+    {
+        _runtime.Modules.AddModule("shared", @"
+            (def value 42)
+        ");
+        _runtime.Modules.AddModule("consumer-a", @"
+            (import shared)
+            (defn get-a [] shared/value)
+        ");
+        _runtime.Modules.AddModule("consumer-b", @"
+            (import shared)
+            (defn get-b [] shared/value)
+        ");
+        var result = _runtime.Eval(@"
+            (import consumer-a)
+            (import consumer-b)
+            (+ (consumer-a/get-a) (consumer-b/get-b))
+        ");
+        Assert.Equal(84.0, result.AsNumber());
+    }
+
+    [Fact]
+    public void ModuleWithStdlibFeatures()
+    {
+        _runtime.Modules.AddModule("functional", @"
+            (defn double-all [xs] (map |(* $ 2) xs))
+            (defn evens [xs] (filter even? xs))
+        ");
+        var result = _runtime.Eval(@"
+            (import functional)
+            (functional/double-all [1 2 3])
+        ");
+        using var arr = result.AsArray();
+        Assert.Equal(3, arr.Count);
+        Assert.Equal(2.0, arr[0].AsNumber());
+        Assert.Equal(4.0, arr[1].AsNumber());
+        Assert.Equal(6.0, arr[2].AsNumber());
+
+        var evensResult = _runtime.Eval("(functional/evens [1 2 3 4 5 6])");
+        using var evens = evensResult.AsArray();
+        Assert.Equal(3, evens.Count);
+        Assert.Equal(2.0, evens[0].AsNumber());
+        Assert.Equal(4.0, evens[1].AsNumber());
+        Assert.Equal(6.0, evens[2].AsNumber());
+    }
+
+    [Fact]
+    public void ModuleReimport_UsesCachedVersion()
+    {
+        _runtime.Modules.AddModule("stateful", @"
+            (var counter 0)
+            (set counter (+ counter 1))
+            (def init-count counter)
+        ");
+        // First import evaluates the module
+        var r1 = _runtime.Eval("(import stateful) stateful/init-count");
+        Assert.Equal(1.0, r1.AsNumber());
+
+        // Second import uses cached env — init-count is still 1
+        var r2 = _runtime.Eval("stateful/init-count");
+        Assert.Equal(1.0, r2.AsNumber());
+    }
+
+    [Fact]
+    public void ModuleWithFiberExport()
+    {
+        _runtime.Modules.AddModule("generators", @"
+            (defn counter [n]
+              (fn []
+                (for i 0 n (yield i))))
+        ");
+        var result = _runtime.Eval(@"
+            (import generators)
+            (def f (fiber/new (generators/counter 4) :yi))
+            (var sum 0)
+            (loop [v :in f] (set sum (+ sum v)))
+            sum
+        ");
+        // 0 + 1 + 2 + 3 = 6
+        Assert.Equal(6.0, result.AsNumber());
     }
 }

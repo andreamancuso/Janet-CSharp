@@ -3,7 +3,7 @@ using JanetSharp;
 
 namespace JanetSharp.Tests;
 
-// === JanetFunction Tests (4.1) ===
+// === JanetFunction Tests ===
 
 public class JanetFunctionTests : IDisposable
 {
@@ -103,7 +103,7 @@ public class JanetFunctionTests : IDisposable
     }
 }
 
-// === JanetCallback Tests (4.2) ===
+// === JanetCallback Tests ===
 
 public class JanetCallbackTests : IDisposable
 {
@@ -214,7 +214,7 @@ public class JanetCallbackTests : IDisposable
     }
 }
 
-// === JanetConvert Tests (4.3) ===
+// === JanetConvert Tests ===
 
 public class JanetConvertTests : IDisposable
 {

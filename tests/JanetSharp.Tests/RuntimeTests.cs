@@ -3,6 +3,8 @@ using JanetSharp;
 
 namespace JanetSharp.Tests;
 
+// === Smoke Tests ===
+
 public class SmokeTests : IDisposable
 {
     private readonly JanetRuntime _runtime;
@@ -72,5 +74,68 @@ public class SmokeTests : IDisposable
     {
         _runtime.Eval("(error \"test error\")", out var signal);
         Assert.Equal(JanetSignal.Error, signal);
+    }
+}
+
+// === JanetRuntime Tests ===
+
+public class JanetRuntimeTests
+{
+    [Fact]
+    public void Init_And_Dispose_Work()
+    {
+        using var runtime = new JanetRuntime();
+        Assert.NotEqual(IntPtr.Zero, runtime.CoreEnvironment);
+    }
+
+    [Fact]
+    public void Eval_ReturnsResult()
+    {
+        using var runtime = new JanetRuntime();
+        var result = runtime.Eval("(+ 1 2)");
+        Assert.Equal(JanetType.Number, result.Type);
+        Assert.Equal(3.0, result.AsNumber());
+    }
+
+    [Fact]
+    public void Eval_WithError_Throws()
+    {
+        using var runtime = new JanetRuntime();
+        var ex = Assert.Throws<JanetException>(() => runtime.Eval("(error \"boom\")"));
+        Assert.Equal(JanetSignal.Error, ex.Signal);
+    }
+
+    [Fact]
+    public void Eval_WithSignalOut_DoesNotThrow()
+    {
+        using var runtime = new JanetRuntime();
+        var result = runtime.Eval("(error \"boom\")", out var signal);
+        Assert.Equal(JanetSignal.Error, signal);
+    }
+
+    [Fact]
+    public void DoubleInit_Throws()
+    {
+        using var runtime1 = new JanetRuntime();
+        Assert.Throws<InvalidOperationException>(() => new JanetRuntime());
+    }
+
+    [Fact]
+    public void AfterDispose_CanCreateNew()
+    {
+        var runtime1 = new JanetRuntime();
+        runtime1.Dispose();
+
+        using var runtime2 = new JanetRuntime();
+        var result = runtime2.Eval("(+ 10 20)");
+        Assert.Equal(30.0, result.AsNumber());
+    }
+
+    [Fact]
+    public void Eval_AfterDispose_Throws()
+    {
+        var runtime = new JanetRuntime();
+        runtime.Dispose();
+        Assert.Throws<ObjectDisposedException>(() => runtime.Eval("1"));
     }
 }

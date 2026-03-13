@@ -3,7 +3,7 @@ using JanetSharp;
 
 namespace JanetSharp.Tests;
 
-// === Fiber (Coroutine) Tests (9.1) ===
+// === Fiber (Coroutine) Tests ===
 
 public class FiberTests : IDisposable
 {
