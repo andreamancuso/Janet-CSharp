@@ -200,13 +200,7 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 * `shim_abstract_check` validates the abstract type pointer to reject other abstract types.
 * C-shim functions: `shim_register_abstract_gc`, `shim_abstract_create`, `shim_abstract_get_handle`, `shim_abstract_check`.
 
-* **9.3 Module Loading & VFS (Virtual File System)**
-* Build a module system in C#/C-shim that works within the current `JANET_BOOTSTRAP` constraints.
-* `JanetModuleRegistry` — resolves module names to source (in-memory strings, .NET embedded resources, filesystem paths). Caches loaded environments.
-* `JanetEnvironment` — child environment tables with prototype chain to core env (mimics Janet's `make-env`). Isolates module bindings.
-* Janet-callable `require` — registered as a CFunction via the trampoline system, so Janet code can do `(def m (require "mylib"))`.
-* C-shim additions: `shim_dobytes` (evaluate byte arrays from embedded resources), `shim_table_setproto` (environment inheritance), `shim_resolve` (binding lookup with `{:value val}` unwrapping), `shim_dostring_in` (eval with custom source path).
-* **Note:** With Phase 10.1 complete, Janet's native `import`/`require`/`dofile` are now available. This phase may be superseded by Phase 10.3 (Native Module System Integration), which hooks into Janet's built-in module system instead of reimplementing it.
+* ~~**9.3 Module Loading & VFS (Virtual File System)**~~ — *Superseded by Phase 10.3.* Originally planned to reimplement `require`/`import` in C#/C-shim under `JANET_BOOTSTRAP` constraints. With Phase 10.1 complete, Janet's native module system is fully available, making a custom reimplementation unnecessary.
 
 ---
 
