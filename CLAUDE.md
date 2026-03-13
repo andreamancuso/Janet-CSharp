@@ -28,7 +28,13 @@ dotnet test
 Janet uses `setjmp`/`longjmp` for error handling. If a `longjmp` unwinds through a C# P/Invoke frame, the CLR crashes. The C-shim wraps **all** Janet API calls so panics are caught by `janet_pcall` (which uses `setjmp` internally) and converted to return codes. No Janet call should ever be made directly from C# without going through the shim.
 
 ### Janet build strategy
-Janet is included as a git submodule at `extern/janet`. We compile all `src/core/*.c` with `-DJANET_BOOTSTRAP` which gives us `janet_core_env()` with C-level built-in functions without needing the full amalgamation bootstrap. This means Janet-language stdlib functions (`defn`, `loop`, `map`, etc.) are NOT available — only C-registered primitives (`+`, `-`, `print`, `type`, etc.).
+Janet is included as a git submodule at `extern/janet`. The CMake build uses a **two-stage bootstrap**:
+
+1. **Stage 1**: Build `janet_boot` executable from `src/core/*.c` + `src/boot/*.c` with `-DJANET_BOOTSTRAP`.
+2. **Stage 2**: Run `janet_boot` to execute `boot.janet`, which compiles the full Janet stdlib and outputs a serialized core image (`janet_core_image.c`).
+3. **Stage 3**: Build `janet_shim.dll` from `src/core/*.c` + the generated image + `janet_shim.c` **without** `JANET_BOOTSTRAP`. The full Janet language is available (`defn`, `loop`, `map`, `match`, `import`, etc.).
+
+Disabled subsystems: `JANET_NO_EV`, `JANET_NO_FFI`, `JANET_NO_NET`, `JANET_NO_DYNAMIC_MODULES` — set on both the boot executable and the final library to keep the image consistent.
 
 ### Value marshalling
 Janet values are 64-bit NaN-boxed unions. They cross the P/Invoke boundary as `long` (8 bytes). All Janet pointer types (tables, functions, fibers) are passed as `void*`/`IntPtr`.

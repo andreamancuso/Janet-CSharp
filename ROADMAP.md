@@ -201,5 +201,85 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 * C-shim functions: `shim_register_abstract_gc`, `shim_abstract_create`, `shim_abstract_get_handle`, `shim_abstract_check`.
 
 * **9.3 Module Loading & VFS (Virtual File System)**
-* Hook into Janet's `import` mechanism.
-* Allow Janet scripts to load other Janet scripts embedded within .NET Assembly Resources, bypassing the physical disk.
+* Build a module system in C#/C-shim that works within the current `JANET_BOOTSTRAP` constraints.
+* `JanetModuleRegistry` — resolves module names to source (in-memory strings, .NET embedded resources, filesystem paths). Caches loaded environments.
+* `JanetEnvironment` — child environment tables with prototype chain to core env (mimics Janet's `make-env`). Isolates module bindings.
+* Janet-callable `require` — registered as a CFunction via the trampoline system, so Janet code can do `(def m (require "mylib"))`.
+* C-shim additions: `shim_dobytes` (evaluate byte arrays from embedded resources), `shim_table_setproto` (environment inheritance), `shim_resolve` (binding lookup with `{:value val}` unwrapping), `shim_dostring_in` (eval with custom source path).
+* **Note:** With Phase 10.1 complete, Janet's native `import`/`require`/`dofile` are now available. This phase may be superseded by Phase 10.3 (Native Module System Integration), which hooks into Janet's built-in module system instead of reimplementing it.
+
+---
+
+## Phase 10: Full Janet Standard Library (Amalgamation Transition)
+
+*Goal: Transition from `JANET_BOOTSTRAP` to the full Janet amalgamation build, unlocking the complete Janet language — `defn`, `loop`, `map`, `filter`, `match`, `import`, `defmacro`, and all ~500 stdlib functions.*
+
+### Background
+
+JanetSharp currently compiles Janet's `src/core/*.c` files with the `JANET_BOOTSTRAP` flag. This gives access only to C-level primitives (`+`, `-`, `print`, `def`, `fn`, `if`, `while`, etc.) — roughly 150 functions. The full Janet language, defined in `boot.janet` (~5,000 lines), provides ~500 additional functions and macros including `defn`, `let`, `loop`, `each`, `map`, `filter`, `match`, `import`, `require`, `dofile`, and the entire module system.
+
+The transition requires a **two-stage build**: first compile a bootstrap interpreter, then run it to generate a binary image of the full stdlib, then compile the final library with that image embedded.
+
+---
+
+* ✅ **10.1 Two-Stage CMake Build**
+* Implemented three-stage CMake build in `native/CMakeLists.txt`:
+  * **Stage 1**: `janet_boot` executable — compiles `src/core/*.c` + `src/boot/*.c` with `JANET_BOOTSTRAP` and all `JANET_NO_*` flags.
+  * **Stage 2**: `add_custom_command` runs `janet_boot <janet_root> image-only` to generate `janet_core_image.c` (serialized stdlib image only, not full amalgamation).
+  * **Stage 3**: `janet_shim` shared library — compiles `src/core/*.c` + `janet_core_image.c` + `janet_shim.c` **without** `JANET_BOOTSTRAP`.
+* Used `image-only` mode instead of full amalgamation — keeps individual `src/core/*.c` files for better debugging and incremental builds.
+* Used `${CMAKE_COMMAND} -E env` wrapper for cross-platform stdout redirect.
+* Helper function `janet_platform_settings()` applies platform-specific flags to both targets.
+* CI pipeline unchanged — same `cmake -B build && cmake --build build --config Release` commands.
+
+* ✅ **10.2 Shim Audit & Compatibility**
+* `janet_shim.c` required **zero changes** — all shim functions are build-mode-agnostic.
+* `janet_core_env()` returns a compatible `JanetTable*` in both modes; `shim_def`, `shim_dostring`, all function/fiber/callback APIs work unchanged.
+* All 253 existing tests pass without modification.
+* 24 new stdlib tests added (Phase10Tests.cs) verifying: `defn`, `let`, `when`, `unless`, `cond`, `case`, `if-let`, `loop`, `for`, `each`, `map`, `filter`, `reduce`, `keep`, `find`, `match`, `string/format`, `defmacro`, short-fn syntax, `apply`, `interpose`, `frequencies`.
+* Total: 277 tests passing.
+
+* **10.3 Native Module System Integration**
+* With the full stdlib available, Janet's native `import`, `require`, `dofile`, `module/paths`, `module/cache`, `module/loaders` all become available.
+* Refactor `JanetModuleRegistry` (from Phase 9.3) to hook into Janet's native module system instead of reimplementing it:
+  * Register a custom loader in `module/loaders` (e.g., `:csharp`) that calls back into C# to resolve module sources.
+  * Register custom path entries in `module/paths` that map to embedded resources and in-memory sources.
+  * Use `module/cache` for caching instead of a C#-side dictionary.
+* VFS integration: register a `:resource` loader that reads from `Assembly.GetManifestResourceStream`.
+* Janet code can now use idiomatic `(import mylib)` syntax instead of `(def m (require "mylib"))`.
+* Deprecate (but keep) the C#-side `Require()` API for backward compatibility.
+
+* **10.4 Full Language Test Suite**
+* Add tests exercising Janet stdlib functions that were previously unavailable:
+  * Macros: `defn`, `defmacro`, `let`, `when`, `unless`, `cond`, `case`.
+  * Iteration: `loop`, `for`, `each`, `map`, `filter`, `reduce`, `keep`, `find`.
+  * Pattern matching: `match`.
+  * String formatting: `string/format`, `pp`.
+  * Module system: `import`, `require`, `use`, `module/paths`, `module/cache`.
+  * Destructuring, short-fn syntax (`|`), quasiquoting.
+* Stress-test the module system with circular dependency detection, nested imports, and large module graphs.
+* Verify fiber interactions with the full stdlib (fibers + `each` + `yield`, generator patterns).
+
+* **10.5 `JANET_NO_*` Flag Review**
+* Re-evaluate which `JANET_NO_*` flags are still appropriate with the full amalgamation:
+  * `JANET_NO_EV` — likely keep (Janet is single-threaded in our bridge, no event loop needed).
+  * `JANET_NO_NET` — likely keep (networking from Janet is not a goal of the bridge).
+  * `JANET_NO_FFI` — likely keep (FFI is redundant when the whole point is C#↔Janet interop via the shim).
+  * `JANET_NO_DYNAMIC_MODULES` — **reconsider**: with the full module system, allowing `native` module loading could enable Janet C extensions. May be useful for advanced users. Security implications to evaluate.
+* Document the rationale for each flag in `CLAUDE.md` and `CONTRIBUTING.md`.
+
+* **10.6 Documentation & Migration Guide**
+* Update `CLAUDE.md` build instructions for the two-stage build.
+* Update `CONTRIBUTING.md` with the new build architecture.
+* Update `README.md` feature list — remove the "JANET_BOOTSTRAP mode" limitation from Current Limitations.
+* Update `docs/guide/getting-started.md` with examples using `defn`, `loop`, `import`, etc.
+* Write a migration guide for users upgrading from the bootstrap-only version.
+* Update all documentation that references the bootstrap limitation.
+
+* **10.7 Performance Baseline**
+* Benchmark the amalgamation build vs. the bootstrap build:
+  * Startup time (`janet_init` + `janet_core_env` — image unmarshal vs. procedural registration).
+  * DLL size (amalgamated `janet.c` is ~30K lines vs. individual core files).
+  * Eval latency for simple expressions.
+  * Memory footprint (full stdlib environment is larger).
+* Document results and set performance baselines for future optimization.

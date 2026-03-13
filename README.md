@@ -4,6 +4,7 @@ A high-performance .NET bridge for embedding the [Janet](https://janet-lang.org/
 
 ## Features
 
+- **Full Janet language** — complete stdlib via two-stage boot (`defn`, `loop`, `map`, `match`, `import`, macros, and all ~500 stdlib functions)
 - **Safe interop** — C-shim layer catches all Janet panics before they cross P/Invoke boundaries
 - **Full type system** — strings, symbols, keywords, arrays, tuples, tables, structs, buffers
 - **Bi-directional function calls** — call Janet functions from C#, register C# callbacks callable from Janet
@@ -132,7 +133,6 @@ C# callbacks use a **64-slot trampoline system** in the C shim. Each slot has a 
 
 ## Current Limitations
 
-- **JANET_BOOTSTRAP mode** — only C-level built-in functions are available (`+`, `-`, `*`, `/`, `print`, `type`, `length`, `error`, `fn`, etc.). Janet standard library functions (`defn`, `loop`, `map`, `filter`, etc.) are not available.
 - **Single-threaded** — Janet is inherently single-threaded. `JanetRuntime` enforces thread affinity.
 - **64 callback slots** — maximum of 64 concurrent C# callbacks registered with Janet.
 - **macOS support** — the native shim builds on macOS but crashes during `janet_init()` on Apple Silicon CI runners. macOS is temporarily disabled in CI. Local macOS builds may work. <!-- TODO: investigate and re-enable macOS CI -->
