@@ -62,6 +62,16 @@ Janet has its own garbage collector. When C# holds a reference to a heap-allocat
 
 C# callbacks use a 64-slot trampoline table in the C shim. Each slot has a pre-compiled C function (`shim_tramp_0` through `shim_tramp_63`) that dispatches to a registered managed delegate. This ensures `longjmp` from Janet error handling never passes through managed frames.
 
+### Build Pipeline (Two-Stage Boot)
+
+The native build uses a two-stage process to embed the full Janet stdlib:
+
+1. **Stage 1** — CMake compiles `janet_boot` (an executable) from Janet's core C files + boot compiler, with `JANET_BOOTSTRAP` defined.
+2. **Stage 2** — `janet_boot` runs `boot.janet` to produce `janet_core_image.c`, a serialized binary image of the full Janet stdlib.
+3. **Stage 3** — CMake compiles `janet_shim.dll` from the core C files + the generated image + `janet_shim.c`, **without** `JANET_BOOTSTRAP`. The full Janet language is available at runtime.
+
+This all happens automatically via `cmake --build`. Contributors don't need to run any extra steps.
+
 ## Adding a New Shim Function
 
 End-to-end process for exposing a new Janet API to C#:
@@ -127,12 +137,20 @@ public void ExampleMethod_Works()
 
 ## Testing
 
-Tests are organized by phase:
+Tests are organized by feature area:
 
-- `SmokeTests.cs` — basic runtime initialization and eval
-- `Phase2Tests.cs` — primitive marshalling, GC rooting, runtime lifecycle
-- `Phase3Tests.cs` — strings, arrays, tuples, tables, structs, buffers
-- `Phase4Tests.cs` — function invocation, callbacks, type coercion
+- `RuntimeTests.cs` — runtime lifecycle, init/dispose, eval
+- `ValueTests.cs` — Janet struct and JanetValue smart pointer
+- `StringTests.cs` — strings, symbols, keywords
+- `CollectionTests.cs` — arrays, tuples, buffers
+- `TableTests.cs` — tables and structs (immutable maps)
+- `FunctionTests.cs` — function invocation, callbacks, type coercion
+- `FiberTests.cs` — fiber creation, resume, yield, signals
+- `AbstractTests.cs` — .NET object bridging via JanetAbstract
+- `StdlibTests.cs` — full Janet stdlib (macros, iteration, pattern matching, etc.)
+- `ModuleTests.cs` — module registration and import
+- `SafetyTests.cs` — dispose safety, type errors, thread affinity, edge cases
+- `StressTests.cs` — GC pressure, hot loops, large data churn
 
 Run all tests:
 

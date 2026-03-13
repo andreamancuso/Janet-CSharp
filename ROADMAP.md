@@ -258,13 +258,11 @@ JanetSharp originally compiled Janet's `src/core/*.c` files with the `JANET_BOOT
 * Other flags (`JANET_NO_ASSEMBLER`, `JANET_NO_PEG`, `JANET_NO_INT_TYPES`) are NOT set and should stay enabled — useful and harmless.
 * Documented flag rationale in `CLAUDE.md`.
 
-* **10.6 Documentation & Migration Guide**
-* Update `CLAUDE.md` build instructions for the two-stage build.
-* Update `CONTRIBUTING.md` with the new build architecture.
-* Update `README.md` feature list — remove the "JANET_BOOTSTRAP mode" limitation from Current Limitations.
-* Update `docs/guide/getting-started.md` with examples using `defn`, `loop`, `import`, etc.
-* Write a migration guide for users upgrading from the bootstrap-only version.
-* Update all documentation that references the bootstrap limitation.
+* ✅ **10.6 Documentation & Migration Guide**
+* Audited all documentation files for stale `JANET_BOOTSTRAP` references — `README.md`, `CLAUDE.md`, and all `docs/guide/*.md` files were already updated during earlier phases.
+* Updated `CONTRIBUTING.md`: added "Build Pipeline (Two-Stage Boot)" subsection explaining the three-stage CMake build for contributors.
+* Updated `CONTRIBUTING.md`: replaced outdated phase-based test file list with current feature-based organization (12 files).
+* Migration guide deferred — no external users yet (pre-1.0, no NuGet consumers). The transition is fully backward-compatible; no user code changes required.
 
 * **10.7 Performance Baseline**
 * Benchmark the amalgamation build vs. the bootstrap build:
