@@ -186,3 +186,48 @@ ReadOnlySpan<byte> data = buf.AsSpan();           // zero-copy access
 buf.SetCount(3);                                  // truncate to 3 bytes
 buf.EnsureCapacity(1024);                         // grow backing storage
 ```
+
+## Abstract Types
+
+Abstract types let you wrap arbitrary .NET objects inside Janet's GC. The object stays alive as long as Janet holds a reference; when Janet collects the abstract, the .NET reference is released. This is useful for passing opaque handles (database connections, UI controls, service objects) into Janet scripts.
+
+```csharp
+// Create an abstract wrapping any .NET object
+var conn = new DatabaseConnection("server=localhost");
+using var abs = JanetAbstract.Create(conn);
+
+// Type tag
+abs.Type;                                         // JanetType.Abstract
+
+// Extract the target (same reference)
+var same = abs.GetTarget<DatabaseConnection>();    // same instance as conn
+
+// Use AsAbstract() on raw Janet values
+Janet raw = abs.Value;
+using var abs2 = raw.AsAbstract();
+```
+
+### Static Extraction (for Callbacks)
+
+In callbacks, use the static `GetTarget` methods to extract the .NET object from a raw `Janet` value without allocating a wrapper:
+
+```csharp
+using var cb = runtime.Register("use-conn", args =>
+{
+    var db = JanetAbstract.GetTarget<DatabaseConnection>(args[0]);
+    db.Execute("SELECT 1");
+    return Janet.Nil;
+});
+```
+
+### Storing in Collections
+
+Abstracts can be stored in Janet arrays, tables, and other collections:
+
+```csharp
+using var tbl = JanetTable.Create();
+tbl[Janet.From("conn")] = abs.Value;
+
+// Later, retrieve it
+var retrieved = JanetAbstract.GetTarget<DatabaseConnection>(tbl[Janet.From("conn")]);
+```

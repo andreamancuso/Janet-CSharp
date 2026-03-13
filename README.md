@@ -54,6 +54,12 @@ Console.WriteLine(fiber.Resume());      // Janet(Number) → yielded 2
 Console.WriteLine(fiber.Resume());      // Janet(Number) → returned 3
 Console.WriteLine(fiber.CanResume);     // False
 
+// Wrap .NET objects as Janet abstracts (GC-bridged)
+using var abs = JanetAbstract.Create(new List<string> { "hello", "world" });
+Console.WriteLine(abs.Type);                       // Abstract
+var list = abs.GetTarget<List<string>>();           // same reference
+Console.WriteLine(list[0]);                        // "hello"
+
 // Automatic type coercion
 Janet j = JanetConvert.ToJanet("hello");
 string s = JanetConvert.ToClr<string>(j); // "hello"
@@ -98,6 +104,7 @@ dotnet test
 | `JanetValue` | GC-rooted wrapper (`IDisposable`). Use for heap-allocated Janet values. |
 | `JanetFunction` | Wraps a Janet function for safe invocation from C#. |
 | `JanetFiber` | Wraps a Janet fiber (coroutine) with resume/yield/status. |
+| `JanetAbstract` | Wraps a .NET object as a Janet abstract, GC-bridged. |
 | `JanetCallback` | Exposes a C# delegate as a Janet-callable function. |
 | `JanetConvert` | Static helper for .NET ↔ Janet type coercion. |
 
@@ -113,6 +120,7 @@ dotnet test
 | `JanetTable` | table | `IDictionary<Janet, Janet>` |
 | `JanetStruct` | struct | `IReadOnlyDictionary<Janet, Janet>` |
 | `JanetBuffer` | buffer | `JanetValue` + `WriteByte()`, `AsSpan()` |
+| `JanetAbstract` | abstract | `JanetValue` + `Target`, `GetTarget<T>()` |
 
 ## Architecture
 

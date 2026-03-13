@@ -28,4 +28,5 @@ All public types and members have XML doc comments. Use IntelliSense in your IDE
 | `JanetArray` / `JanetTuple` | Ordered collections (mutable / immutable) |
 | `JanetTable` / `JanetStruct` | Key-value maps (mutable / immutable) |
 | `JanetBuffer` | Mutable byte sequence |
+| `JanetAbstract` | Wrap .NET objects inside Janet's GC |
 | `JanetException` | Error propagation from Janet to C# |

@@ -231,4 +231,25 @@ internal static partial class NativeMethods
 
     [LibraryImport(LibName)]
     internal static partial long shim_wrap_fiber_value(IntPtr fiber);
+
+    // === Custom Abstract Types ===
+
+    /// <summary>
+    /// Managed GC callback invoked by the C shim when Janet collects an abstract value.
+    /// Receives the GCHandle as an IntPtr; must call GCHandle.FromIntPtr(handle).Free().
+    /// </summary>
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void ShimAbstractGcCallback(IntPtr handle);
+
+    [LibraryImport(LibName)]
+    internal static partial void shim_register_abstract_gc(IntPtr cb);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_abstract_create(IntPtr handle);
+
+    [LibraryImport(LibName)]
+    internal static partial IntPtr shim_abstract_get_handle(long x);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_abstract_check(long x);
 }

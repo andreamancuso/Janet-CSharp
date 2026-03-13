@@ -31,6 +31,7 @@ arr.Add(Janet.From(1.0));
 - `JanetTable`, `JanetStruct`
 - `JanetBuffer`
 - `JanetFunction`, `JanetCallback`
+- `JanetAbstract`
 
 All `JanetValue` subclasses handle rooting automatically. You just need to dispose them.
 
@@ -145,5 +146,6 @@ This ensures that any `JanetValue` objects that went out of scope but weren't ex
 | Always dispose `JanetValue` objects | Frees Janet GC roots promptly |
 | Use `using` declarations | Guarantees disposal even on exceptions |
 | Keep callbacks alive while in use | Janet holds a raw function pointer |
+| Dispose `JanetAbstract` when done | Frees the GCHandle bridging .NET and Janet GC |
 | Don't use raw `Janet` after runtime disposal | Underlying memory is freed |
 | Stay on the creating thread | Janet is not thread-safe |

@@ -437,3 +437,65 @@ SHIM_EXPORT void *shim_unwrap_fiber(Janet x) {
 SHIM_EXPORT Janet shim_wrap_fiber_value(void *fiber) {
     return janet_wrap_fiber((JanetFiber *)fiber);
 }
+
+/* === Custom Abstract Type ("sharp/object") ===
+ *
+ * A single shared abstract type that wraps a .NET GCHandle (8 bytes).
+ * When Janet GCs the abstract, the gc callback invokes a managed function
+ * pointer to free the GCHandle. This lets Janet's GC drive the release
+ * of arbitrary C# objects.
+ */
+
+typedef void (*ShimAbstractGcCallback)(void *handle);
+static ShimAbstractGcCallback shim_abstract_gc_cb = NULL;
+
+static int shim_abstract_gc(void *data, size_t len) {
+    (void)len;
+    void **slot = (void **)data;
+    void *handle = *slot;
+    if (handle && shim_abstract_gc_cb) {
+        shim_abstract_gc_cb(handle);
+        *slot = NULL; /* prevent double-free */
+    }
+    return 0;
+}
+
+static void shim_abstract_tostring(void *data, JanetBuffer *buf) {
+    (void)data;
+    janet_buffer_push_cstring(buf, "<sharp/object>");
+}
+
+static const JanetAbstractType shim_abstract_type = {
+    "sharp/object",
+    shim_abstract_gc,
+    NULL,  /* gcmark */
+    NULL,  /* get */
+    NULL,  /* put */
+    NULL,  /* marshal */
+    NULL,  /* unmarshal */
+    shim_abstract_tostring,
+    NULL,  /* compare */
+    NULL,  /* hash */
+    NULL,  /* next */
+    JANET_ATEND_NEXT
+};
+
+SHIM_EXPORT void shim_register_abstract_gc(ShimAbstractGcCallback cb) {
+    shim_abstract_gc_cb = cb;
+}
+
+SHIM_EXPORT Janet shim_abstract_create(void *handle) {
+    void **data = (void **)janet_abstract(&shim_abstract_type, sizeof(void *));
+    *data = handle;
+    return janet_wrap_abstract(data);
+}
+
+SHIM_EXPORT void *shim_abstract_get_handle(Janet x) {
+    void **data = (void **)janet_unwrap_abstract(x);
+    return *data;
+}
+
+SHIM_EXPORT int shim_abstract_check(Janet x) {
+    if (janet_type(x) != JANET_ABSTRACT) return 0;
+    return janet_abstract_type(janet_unwrap_abstract(x)) == &shim_abstract_type;
+}

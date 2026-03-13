@@ -193,8 +193,12 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 * C-shim functions: `shim_fiber_new`, `shim_continue`, `shim_fiber_status`, `shim_fiber_can_resume`, `shim_unwrap_fiber`, `shim_wrap_fiber_value`.
 * **Note:** `Task<JanetValue> RunAsync()` was originally planned but is not applicable — Janet is single-threaded and we build with `JANET_NO_EV` (no event loop). Fiber operations are synchronous.
 
-* **9.2 Custom Abstract Types**
-* Utilize Janet's `Abstract` types to wrap complex C# objects (like Database connections or UI Windows) inside Janet, fully managed by Janet's GC but finalized in C#.
+* **9.2 Custom Abstract Types** ✅
+* Implemented `JanetAbstract : JanetValue` using a shared "sharp/object" abstract type in the C shim.
+* Stores a `GCHandle` (8 bytes) in the abstract data; Janet's GC callback frees the handle via a registered managed function pointer.
+* `Create(object)`, `Wrap(Janet)`, `Target`, `GetTarget<T>()`, static `GetTarget(Janet)` / `GetTarget<T>(Janet)` for use in callbacks.
+* `shim_abstract_check` validates the abstract type pointer to reject other abstract types.
+* C-shim functions: `shim_register_abstract_gc`, `shim_abstract_create`, `shim_abstract_get_handle`, `shim_abstract_check`.
 
 * **9.3 Module Loading & VFS (Virtual File System)**
 * Hook into Janet's `import` mechanism.

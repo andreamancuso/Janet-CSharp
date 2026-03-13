@@ -175,6 +175,13 @@ public readonly struct Janet : IEquatable<Janet>
     /// <exception cref="InvalidOperationException">This value is not a Fiber.</exception>
     public JanetFiber AsFiber() => JanetFiber.Wrap(this);
 
+    /// <summary>
+    /// Wraps this value as a JanetAbstract. Only valid for sharp/object abstract type.
+    /// </summary>
+    /// <returns>A GC-rooted JanetAbstract wrapper.</returns>
+    /// <exception cref="InvalidOperationException">This value is not a sharp/object abstract.</exception>
+    public JanetAbstract AsAbstract() => JanetAbstract.Wrap(this);
+
     // === Equality ===
 
     /// <inheritdoc />
