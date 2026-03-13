@@ -499,3 +499,15 @@ SHIM_EXPORT int shim_abstract_check(Janet x) {
     if (janet_type(x) != JANET_ABSTRACT) return 0;
     return janet_abstract_type(janet_unwrap_abstract(x)) == &shim_abstract_type;
 }
+
+/* === Module System Support === */
+
+SHIM_EXPORT void *shim_make_env(void *parent) {
+    JanetTable *env = janet_table(0);
+    env->proto = (JanetTable *)parent;
+    return (void *)env;
+}
+
+SHIM_EXPORT Janet shim_wrap_table(void *tbl) {
+    return janet_wrap_table((JanetTable *)tbl);
+}

@@ -210,9 +210,7 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 ### Background
 
-JanetSharp currently compiles Janet's `src/core/*.c` files with the `JANET_BOOTSTRAP` flag. This gives access only to C-level primitives (`+`, `-`, `print`, `def`, `fn`, `if`, `while`, etc.) — roughly 150 functions. The full Janet language, defined in `boot.janet` (~5,000 lines), provides ~500 additional functions and macros including `defn`, `let`, `loop`, `each`, `map`, `filter`, `match`, `import`, `require`, `dofile`, and the entire module system.
-
-The transition requires a **two-stage build**: first compile a bootstrap interpreter, then run it to generate a binary image of the full stdlib, then compile the final library with that image embedded.
+JanetSharp originally compiled Janet's `src/core/*.c` files with the `JANET_BOOTSTRAP` flag, giving access only to ~150 C-level primitives. The full Janet language, defined in `boot.janet` (~5,000 lines), provides ~500 additional functions and macros. This phase transitioned to a **two-stage build** that generates a binary image of the full stdlib and embeds it in the final library.
 
 ---
 
@@ -233,15 +231,16 @@ The transition requires a **two-stage build**: first compile a bootstrap interpr
 * 24 new stdlib tests added (Phase10Tests.cs) verifying: `defn`, `let`, `when`, `unless`, `cond`, `case`, `if-let`, `loop`, `for`, `each`, `map`, `filter`, `reduce`, `keep`, `find`, `match`, `string/format`, `defmacro`, short-fn syntax, `apply`, `interpose`, `frequencies`.
 * Total: 277 tests passing.
 
-* **10.3 Native Module System Integration**
-* With the full stdlib available, Janet's native `import`, `require`, `dofile`, `module/paths`, `module/cache`, `module/loaders` all become available.
-* Refactor `JanetModuleRegistry` (from Phase 9.3) to hook into Janet's native module system instead of reimplementing it:
-  * Register a custom loader in `module/loaders` (e.g., `:csharp`) that calls back into C# to resolve module sources.
-  * Register custom path entries in `module/paths` that map to embedded resources and in-memory sources.
-  * Use `module/cache` for caching instead of a C#-side dictionary.
-* VFS integration: register a `:resource` loader that reads from `Assembly.GetManifestResourceStream`.
-* Janet code can now use idiomatic `(import mylib)` syntax instead of `(def m (require "mylib"))`.
-* Deprecate (but keep) the C#-side `Require()` API for backward compatibility.
+* ✅ **10.3 Native Module System Integration**
+* New `JanetModule` class (accessible via `runtime.Modules`) hooks into Janet's native module system.
+* `AddModule(name, source)` — evaluates Janet source in an isolated child environment, caches in `module/cache`. Janet code uses `(import name)` naturally.
+* `AddModule(name, JanetTable)` — caches a pre-built environment table directly.
+* `RegisterLoader(keyword, callback)` — adds a custom loader to `module/loaders` for advanced use cases.
+* `IsModuleCached(name)` — checks whether a module is already cached.
+* Module isolation: child environments use prototype chains so definitions don't pollute the global scope.
+* Module dependencies work: module A can `(import B)` within its source.
+* C-shim additions: `shim_make_env` (child environment creation), `shim_wrap_table` (table pointer to NaN-boxed value).
+* 15 tests covering import variants (prefix, :as, :prefix ""), caching, dependencies, error handling, pre-built tables, custom loaders, C# callback integration.
 
 * **10.4 Full Language Test Suite**
 * Add tests exercising Janet stdlib functions that were previously unavailable:

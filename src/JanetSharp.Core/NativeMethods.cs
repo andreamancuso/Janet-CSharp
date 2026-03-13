@@ -252,4 +252,12 @@ internal static partial class NativeMethods
 
     [LibraryImport(LibName)]
     internal static partial int shim_abstract_check(long x);
+
+    // === Module System Support ===
+
+    [LibraryImport(LibName)]
+    internal static partial IntPtr shim_make_env(IntPtr parent);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_wrap_table(IntPtr tbl);
 }

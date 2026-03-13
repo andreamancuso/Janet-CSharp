@@ -10,6 +10,7 @@ public sealed class JanetRuntime : IDisposable
     private static int _generation;
     private readonly int _ownerThreadId;
     private bool _disposed;
+    private JanetModule? _modules;
 
     /// <summary>
     /// Returns true if a JanetRuntime instance is currently active (VM initialized).
@@ -98,6 +99,20 @@ public sealed class JanetRuntime : IDisposable
     }
 
     /// <summary>
+    /// Provides access to Janet's native module system for registering
+    /// modules that can be imported via <c>(import name)</c>.
+    /// </summary>
+    public JanetModule Modules
+    {
+        get
+        {
+            CheckThread();
+            CheckDisposed();
+            return _modules ??= new JanetModule(this);
+        }
+    }
+
+    /// <summary>
     /// Registers a C# callback as a named function in the Janet environment.
     /// The returned JanetCallback must be kept alive (not disposed) as long as
     /// Janet code may call the function.
@@ -135,6 +150,9 @@ public sealed class JanetRuntime : IDisposable
             return;
 
         _disposed = true;
+
+        // Dispose module system loader callbacks before tearing down the VM
+        _modules?.DisposeLoaders();
 
         // Flush pending finalizers so JanetValue objects that are already unreachable
         // get their shim_gcunroot calls while the VM is still alive.

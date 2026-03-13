@@ -97,16 +97,44 @@ Janet result = square.Invoke(Janet.From(7.0));
 Console.WriteLine(result.AsNumber()); // 49.0
 ```
 
-## Available Built-in Functions
+## Available Functions
 
-JanetSharp uses `JANET_BOOTSTRAP` mode, which provides C-level built-in functions only:
+JanetSharp includes the **complete Janet standard library** (~500 functions and macros):
 
 - Arithmetic: `+`, `-`, `*`, `/`, `%`, `mod`
 - Comparison: `<`, `>`, `<=`, `>=`, `=`, `not=`
 - Logic: `not`, `and`, `or`
 - Type: `type`, `length`
-- I/O: `print`, `prin`
-- Control: `if`, `do`, `fn`, `error`
+- I/O: `print`, `prin`, `pp`
+- Control: `if`, `do`, `fn`, `error`, `when`, `unless`, `cond`, `case`
 - Data: `array`, `table`, `struct`, `tuple`, `buffer`, `string`
+- Macros: `defn`, `defmacro`, `let`, `if-let`, `match`
+- Iteration: `loop`, `for`, `each`, `map`, `filter`, `reduce`, `keep`, `find`
+- Strings: `string/format`, `string/join`, `string/split`
+- Modules: `import`, `require`, `use`
 
-Standard library functions like `defn`, `loop`, `map`, `filter` are **not available** — they require the full Janet bootstrap.
+## Modules
+
+You can register Janet modules from C# and import them from Janet code:
+
+```csharp
+// Register a module from source
+runtime.Modules.AddModule("mathlib", @"
+    (def pi 3.14159)
+    (defn circle-area [r] (* pi r r))
+");
+
+// Import and use from Janet
+var area = runtime.Eval(@"
+    (import mathlib)
+    (mathlib/circle-area 5)
+");
+
+// Modules can depend on other modules
+runtime.Modules.AddModule("shapes", @"
+    (import mathlib)
+    (defn sphere-volume [r] (* (/ 4 3) mathlib/pi r r r))
+");
+```
+
+Module names must be simple identifiers (no `/`, `.`, or `@` prefix).

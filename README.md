@@ -5,6 +5,7 @@ A high-performance .NET bridge for embedding the [Janet](https://janet-lang.org/
 ## Features
 
 - **Full Janet language** — complete stdlib via two-stage boot (`defn`, `loop`, `map`, `match`, `import`, macros, and all ~500 stdlib functions)
+- **Module system** — register Janet modules from C# strings or tables, importable via `(import name)`
 - **Safe interop** — C-shim layer catches all Janet panics before they cross P/Invoke boundaries
 - **Full type system** — strings, symbols, keywords, arrays, tuples, tables, structs, buffers
 - **Bi-directional function calls** — call Janet functions from C#, register C# callbacks callable from Janet
@@ -61,6 +62,13 @@ Console.WriteLine(abs.Type);                       // Abstract
 var list = abs.GetTarget<List<string>>();           // same reference
 Console.WriteLine(list[0]);                        // "hello"
 
+// Modules — register from C#, import from Janet
+runtime.Modules.AddModule("mylib", @"
+    (defn greet [name] (string ""Hello, "" name ""!""))
+");
+var greeting = runtime.Eval(@"(import mylib) (mylib/greet ""world"")");
+Console.WriteLine(greeting.AsString()); // "Hello, world!"
+
 // Automatic type coercion
 Janet j = JanetConvert.ToJanet("hello");
 string s = JanetConvert.ToClr<string>(j); // "hello"
@@ -106,6 +114,7 @@ dotnet test
 | `JanetFunction` | Wraps a Janet function for safe invocation from C#. |
 | `JanetFiber` | Wraps a Janet fiber (coroutine) with resume/yield/status. |
 | `JanetAbstract` | Wraps a .NET object as a Janet abstract, GC-bridged. |
+| `JanetModule` | Registers modules importable via Janet's `(import name)`. |
 | `JanetCallback` | Exposes a C# delegate as a Janet-callable function. |
 | `JanetConvert` | Static helper for .NET ↔ Janet type coercion. |
 
