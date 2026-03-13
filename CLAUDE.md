@@ -34,7 +34,18 @@ Janet is included as a git submodule at `extern/janet`. The CMake build uses a *
 2. **Stage 2**: Run `janet_boot` to execute `boot.janet`, which compiles the full Janet stdlib and outputs a serialized core image (`janet_core_image.c`).
 3. **Stage 3**: Build `janet_shim.dll` from `src/core/*.c` + the generated image + `janet_shim.c` **without** `JANET_BOOTSTRAP`. The full Janet language is available (`defn`, `loop`, `map`, `match`, `import`, etc.).
 
-Disabled subsystems: `JANET_NO_EV`, `JANET_NO_FFI`, `JANET_NO_NET`, `JANET_NO_DYNAMIC_MODULES` — set on both the boot executable and the final library to keep the image consistent.
+### Disabled subsystems (`JANET_NO_*` flags)
+
+Set on **both** `janet_boot` and `janet_shim` to keep the image consistent.
+
+| Flag | What it disables | Why disabled |
+|------|-----------------|-------------|
+| `JANET_NO_EV` | Event loop, async channels, filewatch (33 primitives) | macOS ARM64 kqueue crash; spawns OS threads incompatible with single-thread enforcement; C# handles concurrency |
+| `JANET_NO_FFI` | Foreign function interface (17 primitives) | JanetSharp *is* the FFI layer; security risk from loading arbitrary native libraries |
+| `JANET_NO_NET` | Networking/sockets (17 primitives) | Depends on EV; C# provides superior networking APIs |
+| `JANET_NO_DYNAMIC_MODULES` | `.so`/`.dll` native module loading | Security risk; NuGet handles distribution; Janet modules load as source via `(import)` |
+
+Flags **not** set (kept enabled): `JANET_NO_ASSEMBLER`, `JANET_NO_PEG`, `JANET_NO_INT_TYPES` — useful features with no downside.
 
 ### Value marshalling
 Janet values are 64-bit NaN-boxed unions. They cross the P/Invoke boundary as `long` (8 bytes). All Janet pointer types (tables, functions, fibers) are passed as `void*`/`IntPtr`.

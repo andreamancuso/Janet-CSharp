@@ -253,13 +253,14 @@ JanetSharp originally compiled Janet's `src/core/*.c` files with the `JANET_BOOT
 * Stress-test the module system with circular dependency detection, nested imports, and large module graphs.
 * Verify fiber interactions with the full stdlib (fibers + `each` + `yield`, generator patterns).
 
-* **10.5 `JANET_NO_*` Flag Review**
-* Re-evaluate which `JANET_NO_*` flags are still appropriate with the full amalgamation:
-  * `JANET_NO_EV` — likely keep (Janet is single-threaded in our bridge, no event loop needed).
-  * `JANET_NO_NET` — likely keep (networking from Janet is not a goal of the bridge).
-  * `JANET_NO_FFI` — likely keep (FFI is redundant when the whole point is C#↔Janet interop via the shim).
-  * `JANET_NO_DYNAMIC_MODULES` — **reconsider**: with the full module system, allowing `native` module loading could enable Janet C extensions. May be useful for advanced users. Security implications to evaluate.
-* Document the rationale for each flag in `CLAUDE.md` and `CONTRIBUTING.md`.
+* ✅ **10.5 `JANET_NO_*` Flag Review**
+* Audited all four flags against the Janet source. **All four should remain disabled** — no changes needed.
+  * `JANET_NO_EV` — **keep**: disables 33 async/channel/I/O primitives + filewatch. macOS ARM64 kqueue crash. Janet's event loop spawns OS threads incompatible with JanetSharp's single-thread enforcement. C# handles concurrency via async/await.
+  * `JANET_NO_FFI` — **keep**: disables 17 FFI primitives. JanetSharp *is* the FFI layer (C# ↔ Janet via P/Invoke). Allowing Janet scripts to load arbitrary native libraries is a security risk.
+  * `JANET_NO_NET` — **keep**: disables 17 networking primitives. Depends on EV (already disabled). C# provides superior networking APIs.
+  * `JANET_NO_DYNAMIC_MODULES` — **keep**: disables `.so`/`.dll` module loading. Security risk from untrusted scripts. JanetSharp distributes via NuGet; Janet modules load as source via `(import)`.
+* Other flags (`JANET_NO_ASSEMBLER`, `JANET_NO_PEG`, `JANET_NO_INT_TYPES`) are NOT set and should stay enabled — useful and harmless.
+* Documented flag rationale in `CLAUDE.md`.
 
 * **10.6 Documentation & Migration Guide**
 * Update `CLAUDE.md` build instructions for the two-stage build.
