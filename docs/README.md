@@ -21,6 +21,7 @@ All public types and members have XML doc comments. Use IntelliSense in your IDE
 | `Janet` | 64-bit NaN-boxed value (the core value type) |
 | `JanetValue` | GC-safe handle that roots Janet values |
 | `JanetFunction` | Invoke Janet functions from C# |
+| `JanetFiber` | Create and resume Janet fibers (coroutines) |
 | `JanetCallback` | Expose C# functions to Janet |
 | `JanetConvert` | Automatic type conversion |
 | `JanetString` / `JanetSymbol` / `JanetKeyword` | Immutable text types |

@@ -182,14 +182,16 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 ---
 
-## Phase 9: Concurrency & Advanced Features
+## Phase 9: Fibers & Advanced Features
 
-*Goal: Bridge Janet's unique Fiber (coroutine) architecture with .NET's Task Parallel Library (TPL).*
+*Goal: Bridge Janet's fiber (coroutine) system to C# and add advanced interop features.*
 
-* **9.1 Fiber to Task Mapping**
-* Implement `JanetFiber`.
-* Create an extension method `Task<JanetValue> RunAsync(this JanetFiber fiber)`.
-* Map Janet's `yield` / `resume` state machine to the C# `async/await` state machine, allowing a C# Task to `await` a Janet coroutine.
+* **9.1 JanetFiber (Coroutine Support)** ✅
+* Implemented `JanetFiber : JanetValue` with `Create(JanetFunction, params Janet[])`, `Resume()` (throwing and non-throwing variants), `Status`, and `CanResume`.
+* Added `JanetFiberStatus` enum (Dead, Error, Debug, Pending, New, Alive).
+* Added `AsFiber()` to the `Janet` struct for unwrapping fiber values.
+* C-shim functions: `shim_fiber_new`, `shim_continue`, `shim_fiber_status`, `shim_fiber_can_resume`, `shim_unwrap_fiber`, `shim_wrap_fiber_value`.
+* **Note:** `Task<JanetValue> RunAsync()` was originally planned but is not applicable — Janet is single-threaded and we build with `JANET_NO_EV` (no event loop). Fiber operations are synchronous.
 
 * **9.2 Custom Abstract Types**
 * Utilize Janet's `Abstract` types to wrap complex C# objects (like Database connections or UI Windows) inside Janet, fully managed by Janet's GC but finalized in C#.

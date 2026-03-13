@@ -7,6 +7,7 @@ A high-performance .NET bridge for embedding the [Janet](https://janet-lang.org/
 - **Safe interop** — C-shim layer catches all Janet panics before they cross P/Invoke boundaries
 - **Full type system** — strings, symbols, keywords, arrays, tuples, tables, structs, buffers
 - **Bi-directional function calls** — call Janet functions from C#, register C# callbacks callable from Janet
+- **Fibers (coroutines)** — create, resume, and yield from Janet fibers with full signal inspection
 - **Automatic type coercion** — convert between .NET primitives and Janet values with `JanetConvert`
 - **GC-safe smart pointers** — `JanetValue` roots/unroots references in Janet's GC automatically
 - **Cross-platform** — native shim builds for Windows, Linux, and macOS via CMake
@@ -41,6 +42,17 @@ using var cb = runtime.Register("double-it", args =>
 
 var doubled = runtime.Eval("(double-it 21)");
 Console.WriteLine(doubled.AsNumber()); // 42
+
+// Fibers (coroutines)
+using var yieldFn = runtime.GetFunction("(fn [] (yield 1) (yield 2) 3)");
+using var fiber = JanetFiber.Create(yieldFn);
+
+Console.WriteLine(fiber.Status);        // New
+Console.WriteLine(fiber.Resume());      // Janet(Number) → yielded 1
+Console.WriteLine(fiber.Status);        // Pending
+Console.WriteLine(fiber.Resume());      // Janet(Number) → yielded 2
+Console.WriteLine(fiber.Resume());      // Janet(Number) → returned 3
+Console.WriteLine(fiber.CanResume);     // False
 
 // Automatic type coercion
 Janet j = JanetConvert.ToJanet("hello");
@@ -85,6 +97,7 @@ dotnet test
 | `Janet` | 8-byte NaN-boxed value struct. Lightweight, pass by value. |
 | `JanetValue` | GC-rooted wrapper (`IDisposable`). Use for heap-allocated Janet values. |
 | `JanetFunction` | Wraps a Janet function for safe invocation from C#. |
+| `JanetFiber` | Wraps a Janet fiber (coroutine) with resume/yield/status. |
 | `JanetCallback` | Exposes a C# delegate as a Janet-callable function. |
 | `JanetConvert` | Static helper for .NET ↔ Janet type coercion. |
 

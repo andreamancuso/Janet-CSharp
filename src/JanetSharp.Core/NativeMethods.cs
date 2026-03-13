@@ -211,4 +211,24 @@ internal static partial class NativeMethods
 
     [LibraryImport(LibName)]
     internal static partial long shim_wrap_callback(int slot);
+
+    // === Fibers (Coroutines) ===
+
+    [LibraryImport(LibName)]
+    internal static partial IntPtr shim_fiber_new(IntPtr fn, int capacity, int argc, IntPtr argv);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_continue(IntPtr fiber, long inValue, out long outValue);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_fiber_status(IntPtr fiber);
+
+    [LibraryImport(LibName)]
+    internal static partial int shim_fiber_can_resume(IntPtr fiber);
+
+    [LibraryImport(LibName)]
+    internal static partial IntPtr shim_unwrap_fiber(long x);
+
+    [LibraryImport(LibName)]
+    internal static partial long shim_wrap_fiber_value(IntPtr fiber);
 }

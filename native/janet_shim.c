@@ -407,3 +407,33 @@ SHIM_EXPORT Janet shim_wrap_callback(int slot) {
     if (slot < 0 || slot >= SHIM_MAX_CALLBACKS) return janet_wrap_nil();
     return janet_wrap_cfunction(shim_tramp_table[slot]);
 }
+
+/* === Fibers (Coroutines) ===
+ *
+ * janet_continue internally uses janet_try (which wraps setjmp), so panics
+ * are caught and returned as error signals — safe to call across P/Invoke.
+ */
+
+SHIM_EXPORT void *shim_fiber_new(void *fn, int32_t capacity, int32_t argc, const Janet *argv) {
+    return (void *)janet_fiber((JanetFunction *)fn, capacity, argc, argv);
+}
+
+SHIM_EXPORT int shim_continue(void *fiber, Janet in, Janet *out) {
+    return (int)janet_continue((JanetFiber *)fiber, in, out);
+}
+
+SHIM_EXPORT int shim_fiber_status(void *fiber) {
+    return (int)janet_fiber_status((JanetFiber *)fiber);
+}
+
+SHIM_EXPORT int shim_fiber_can_resume(void *fiber) {
+    return janet_fiber_can_resume((JanetFiber *)fiber);
+}
+
+SHIM_EXPORT void *shim_unwrap_fiber(Janet x) {
+    return (void *)janet_unwrap_fiber(x);
+}
+
+SHIM_EXPORT Janet shim_wrap_fiber_value(void *fiber) {
+    return janet_wrap_fiber((JanetFiber *)fiber);
+}

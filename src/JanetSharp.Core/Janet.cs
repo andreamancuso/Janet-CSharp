@@ -168,6 +168,13 @@ public readonly struct Janet : IEquatable<Janet>
     /// <exception cref="InvalidOperationException">This value is not a Function.</exception>
     public JanetFunction AsFunction() => JanetFunction.Wrap(this);
 
+    /// <summary>
+    /// Wraps this value as a JanetFiber. Only valid for Fiber type.
+    /// </summary>
+    /// <returns>A GC-rooted JanetFiber wrapper.</returns>
+    /// <exception cref="InvalidOperationException">This value is not a Fiber.</exception>
+    public JanetFiber AsFiber() => JanetFiber.Wrap(this);
+
     // === Equality ===
 
     /// <inheritdoc />
