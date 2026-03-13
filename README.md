@@ -1,6 +1,6 @@
 # JanetSharp
 
-A high-performance .NET bridge for embedding the [Janet](https://janet-lang.org/) programming language in C# applications. JanetSharp lets you evaluate Janet code, share data structures, invoke Janet functions from C#, and expose C# callbacks to Janet — all with full GC safety and no risk of runtime crashes from Janet's `longjmp`-based error handling.
+A .NET bridge for embedding the [Janet](https://janet-lang.org/) programming language in C# applications. JanetSharp lets you evaluate Janet code, share data structures, invoke Janet functions from C#, and expose C# callbacks to Janet — all with full GC safety and no risk of runtime crashes from Janet's `longjmp`-based error handling.
 
 ## Features
 
