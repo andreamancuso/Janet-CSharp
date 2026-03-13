@@ -112,7 +112,6 @@ C# callbacks use a **64-slot trampoline system** in the C shim. Each slot has a 
 ## Current Limitations
 
 - **JANET_BOOTSTRAP mode** — only C-level built-in functions are available (`+`, `-`, `*`, `/`, `print`, `type`, `length`, `error`, `fn`, etc.). Janet standard library functions (`defn`, `loop`, `map`, `filter`, etc.) are not available.
-- **Table/struct enumeration** — iterating over table/struct entries is not yet implemented.
 - **Single-threaded** — Janet is inherently single-threaded. `JanetRuntime` enforces thread affinity.
 - **64 callback slots** — maximum of 64 concurrent C# callbacks registered with Janet.
 - **macOS support** — the native shim builds on macOS but crashes during `janet_init()` on Apple Silicon CI runners. macOS is temporarily disabled in CI. Local macOS builds may work. <!-- TODO: investigate and re-enable macOS CI -->
@@ -120,6 +119,10 @@ C# callbacks use a **64-slot trampoline system** in the C shim. Each slot has a 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions, architecture overview, and development guidelines.
+
+## Documentation
+
+See the [User Guide](docs/README.md) for detailed guides on types, function calls, callbacks, type coercion, and memory management.
 
 ## Roadmap
 
