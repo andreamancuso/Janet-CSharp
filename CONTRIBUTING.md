@@ -60,7 +60,7 @@ Janet has its own garbage collector. When C# holds a reference to a heap-allocat
 
 ### Callback Trampolines
 
-C# callbacks use a 64-slot trampoline table in the C shim. Each slot has a pre-compiled C function (`shim_tramp_0` through `shim_tramp_63`) that dispatches to a registered managed delegate. This ensures `longjmp` from Janet error handling never passes through managed frames.
+C# callbacks are exposed as native Callable Abstracts implementing the `call` metamethod. This avoids the limitations of static trampoline tables and allows an infinite number of C# delegates to be registered safely, catching `longjmp` panics in the C-shim before they reach managed frames.
 
 ### Build Pipeline (Two-Stage Boot)
 

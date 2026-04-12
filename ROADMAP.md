@@ -44,7 +44,7 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 * **2.3 The Runtime Lifecycle** ✅
 * Implemented `JanetRuntime` managing `janet_init()`/`janet_deinit()` and `janet_core_env`.
 * Singleton enforcement — only one runtime instance at a time.
-* Thread affinity checks — Janet is single-threaded.
+* Thread affinity checks — Janet is single-threaded per runtime, but supports multiple runtimes across different OS threads.
 * `Eval()` methods with both throwing and non-throwing variants.
 * `JanetException` for error propagation.
 
@@ -90,7 +90,7 @@ To create a seamless, high-performance, and garbage-collection-safe bridge betwe
 
 * **4.2 Exposing C# to Janet (Callbacks)** ✅
 * Implemented `JanetCallback : IDisposable` with `CallbackFunc` delegate (`ReadOnlySpan<Janet> → Janet`).
-* 64-slot C-side trampoline system (macro-generated) prevents `longjmp` from unwinding through managed frames.
+* C# callbacks are exposed as native Callable Abstracts, preventing `longjmp` from unwinding through managed frames without artificial slot limits.
 * Delegates pinned via `GCHandle`; C# exceptions caught and converted to `janet_panicv` calls in C.
 * `JanetRuntime.Register(string, CallbackFunc)` registers named functions in the core environment via `shim_def`.
 

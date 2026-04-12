@@ -114,12 +114,23 @@ using (var runtime = new JanetRuntime())
 
 ### 4. Thread Safety
 
-Janet is single-threaded. All runtime access must happen on the thread that created the `JanetRuntime`:
+Janet itself is single-threaded. All runtime access for a specific `JanetRuntime` must happen on the thread that created it. However, you can safely create multiple independent `JanetRuntime` instances across different OS threads for concurrent execution:
 
 ```csharp
+// Safe: Multiple runtimes on different threads
+Task.Run(() => {
+    using var runtime1 = new JanetRuntime();
+    runtime1.Eval("(+ 1 2)");
+});
+
+Task.Run(() => {
+    using var runtime2 = new JanetRuntime();
+    runtime2.Eval("(+ 3 4)");
+});
+
 using var runtime = new JanetRuntime();
 
-// WRONG: accessing from another thread
+// WRONG: accessing a runtime from another thread
 Task.Run(() => runtime.Eval("(+ 1 2)")); // throws InvalidOperationException
 
 // RIGHT: stay on the creating thread

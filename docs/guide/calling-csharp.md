@@ -90,26 +90,6 @@ cb2.Dispose();
 runtime.Eval("(my-func-2)"); // undefined behavior!
 ```
 
-## Slot Limit
-
-There is a maximum of **64 concurrent callbacks**. Each `JanetCallback` occupies one slot. Disposing a callback frees its slot for reuse.
-
-```csharp
-// Slots are recycled
-var callbacks = new List<JanetCallback>();
-for (int i = 0; i < 64; i++)
-{
-    callbacks.Add(runtime.Register($"fn-{i}", _ => Janet.Nil));
-}
-
-// 65th would throw InvalidOperationException
-// Dispose some to free slots
-callbacks[0].Dispose();
-
-// Now we can register another
-var cb = runtime.Register("fn-new", _ => Janet.Nil);
-```
-
 ## Advanced: Direct JanetCallback Construction
 
 You can also create a `JanetCallback` without registering it in the environment:

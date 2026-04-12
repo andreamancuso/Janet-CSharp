@@ -19,7 +19,7 @@ A .NET bridge for embedding the [Janet](https://janet-lang.org/) programming lan
 ```csharp
 using JanetSharp;
 
-// Initialize the Janet runtime (one per process)
+// Initialize the Janet runtime (one per thread)
 using var runtime = new JanetRuntime();
 
 // Evaluate Janet expressions
@@ -108,7 +108,7 @@ dotnet test
 
 | Type | Description |
 |------|-------------|
-| `JanetRuntime` | Manages the Janet VM lifecycle. One instance per process. |
+| `JanetRuntime` | Manages the Janet VM lifecycle. One instance per OS thread. |
 | `Janet` | 8-byte NaN-boxed value struct. Lightweight, pass by value. |
 | `JanetValue` | GC-rooted wrapper (`IDisposable`). Use for heap-allocated Janet values. |
 | `JanetFunction` | Wraps a Janet function for safe invocation from C#. |
@@ -138,12 +138,11 @@ JanetSharp uses a **C-shim layer** (`native/janet_shim.c`) between .NET and Jane
 
 Janet values are **64-bit NaN-boxed** unions that cross the P/Invoke boundary as `long`. The `Janet` struct in C# mirrors this layout. Heap-allocated Janet objects (strings, arrays, tables, etc.) must be **GC-rooted** via `janet_gcroot` to prevent Janet's garbage collector from freeing them while C# still holds a reference — `JanetValue` handles this automatically.
 
-C# callbacks use a **64-slot trampoline system** in the C shim. Each slot has a pre-compiled C function that dispatches to a registered managed delegate, ensuring `longjmp` never passes through managed frames.
+C# callbacks are exposed to Janet as **Callable Abstracts**. The C shim registers a custom Janet Abstract type that wraps an unmanaged function pointer. When Janet calls the abstract, a metamethod executes the C# delegate, ensuring a seamless and infinitely scalable callback system.
 
 ## Current Limitations
 
-- **Single-threaded** — Janet is inherently single-threaded. `JanetRuntime` enforces thread affinity.
-- **64 callback slots** — maximum of 64 concurrent C# callbacks registered with Janet.
+- **Single-threaded (per runtime)** — Janet itself is single-threaded. `JanetRuntime` enforces thread affinity. However, you can safely create multiple `JanetRuntime` instances across different OS threads for true concurrency.
 - **macOS support** — the native shim builds on macOS but crashes during `janet_init()` on Apple Silicon CI runners. macOS is temporarily disabled in CI. Local macOS builds may work. <!-- TODO: investigate and re-enable macOS CI -->
 
 ## Contributing

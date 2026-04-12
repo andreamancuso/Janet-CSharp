@@ -29,7 +29,7 @@ dotnet test
 ```csharp
 using JanetSharp;
 
-// Initialize the Janet runtime (one per process)
+// Initialize the Janet runtime (one per thread)
 using var runtime = new JanetRuntime();
 
 // Evaluate a Janet expression
@@ -39,7 +39,7 @@ Console.WriteLine(result.AsNumber()); // 6
 
 Key points:
 - `JanetRuntime` must be disposed when done (use `using`)
-- Only one `JanetRuntime` can exist at a time (Janet is process-global)
+- Only one `JanetRuntime` can exist per OS thread (Janet is thread-local)
 - All runtime access must happen on the thread that created it
 
 ## Invoking Janet Functions
