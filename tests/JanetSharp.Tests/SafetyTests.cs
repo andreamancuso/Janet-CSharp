@@ -311,7 +311,7 @@ public class TypeConversionErrorTests : IDisposable
     }
 }
 
-// === Callback Slot Exhaustion & Recycling ===
+// === Infinite Callback Support Tests ===
 
 public class CallbackSlotTests : IDisposable
 {
@@ -321,99 +321,29 @@ public class CallbackSlotTests : IDisposable
     public void Dispose() => _runtime.Dispose();
 
     [Fact]
-    public void Exhaust_All_64_Slots()
+    public void Create_LargeNumberOfCallbacks_Succeeds()
     {
-        var callbacks = new JanetCallback[64];
+        const int count = 1000;
+        var callbacks = new JanetCallback[count];
         try
         {
-            for (int i = 0; i < 64; i++)
+            for (int i = 0; i < count; i++)
             {
                 int captured = i;
                 callbacks[i] = new JanetCallback(_ => Janet.From((double)captured));
             }
 
-            // All 64 slots allocated successfully
-            Assert.NotNull(callbacks[63]);
+            // All slots allocated successfully
+            Assert.NotNull(callbacks[count - 1]);
+
+            // Test the last one just to be sure
+            NativeMethods.shim_def(_runtime.CoreEnvironment, "test-cb", callbacks[count - 1].Value.RawValue);
+            var result = _runtime.Eval("(test-cb)");
+            Assert.Equal((double)(count - 1), result.AsNumber());
         }
         finally
         {
             foreach (var cb in callbacks)
-                cb?.Dispose();
-        }
-    }
-
-    [Fact]
-    public void Slot_65_Throws()
-    {
-        var callbacks = new JanetCallback[64];
-        try
-        {
-            for (int i = 0; i < 64; i++)
-                callbacks[i] = new JanetCallback(_ => Janet.Nil);
-
-            var ex = Assert.Throws<InvalidOperationException>(() => new JanetCallback(_ => Janet.Nil));
-            Assert.Contains("Maximum", ex.Message);
-        }
-        finally
-        {
-            foreach (var cb in callbacks)
-                cb?.Dispose();
-        }
-    }
-
-    [Fact]
-    public void Slot_Recycling_After_Dispose()
-    {
-        var callbacks = new JanetCallback[64];
-        try
-        {
-            for (int i = 0; i < 64; i++)
-                callbacks[i] = new JanetCallback(_ => Janet.Nil);
-
-            // Dispose one to free a slot
-            callbacks[0].Dispose();
-            callbacks[0] = null!;
-
-            // Should now be able to register one more
-            var newCb = new JanetCallback(_ => Janet.From(999.0));
-            callbacks[0] = newCb;
-
-            // Register it and verify it works
-            NativeMethods.shim_def(_runtime.CoreEnvironment, "recycled-fn", newCb.Value.RawValue);
-            var result = _runtime.Eval("(recycled-fn)");
-            Assert.Equal(999.0, result.AsNumber());
-        }
-        finally
-        {
-            foreach (var cb in callbacks)
-                cb?.Dispose();
-        }
-    }
-
-    [Fact]
-    public void Full_Cycle_Register_Dispose_Reregister()
-    {
-        // Register 64, dispose all, register 64 again
-        var callbacks = new JanetCallback[64];
-
-        for (int i = 0; i < 64; i++)
-            callbacks[i] = new JanetCallback(_ => Janet.Nil);
-
-        foreach (var cb in callbacks)
-            cb.Dispose();
-
-        // All slots freed, register 64 again
-        var callbacks2 = new JanetCallback[64];
-        try
-        {
-            for (int i = 0; i < 64; i++)
-                callbacks2[i] = new JanetCallback(_ => Janet.From((double)i));
-
-            Assert.NotNull(callbacks2[63]);
-        }
-        finally
-        {
-            foreach (var cb in callbacks2)
                 cb?.Dispose();
         }
     }

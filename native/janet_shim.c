@@ -346,66 +346,36 @@ SHIM_EXPORT void shim_def(void *env, const char *name, Janet val) {
 
 typedef int (*ShimManagedCallback)(int32_t argc, const Janet *argv, Janet *out);
 
-#define SHIM_MAX_CALLBACKS 64
+static Janet shim_callback_call(void *data, int32_t argc, Janet *argv) {
+    Janet out = janet_wrap_nil();
+    void **slot = (void **)data;
+    ShimManagedCallback cb = (ShimManagedCallback)(*slot);
+    if (!cb) janet_panic("managed callback pointer is null");
+    int err = cb(argc, argv, &out);
+    if (err) janet_panicv(out);
+    return out;
+}
 
-static ShimManagedCallback shim_callbacks[SHIM_MAX_CALLBACKS];
-
-#define TRAMP(N) \
-    static Janet shim_tramp_##N(int32_t argc, Janet *argv) { \
-        Janet out = janet_wrap_nil(); \
-        if (!shim_callbacks[N]) janet_panic("callback slot " #N " is empty"); \
-        int err = shim_callbacks[N](argc, argv, &out); \
-        if (err) janet_panicv(out); \
-        return out; \
-    }
-
-TRAMP(0)  TRAMP(1)  TRAMP(2)  TRAMP(3)  TRAMP(4)  TRAMP(5)  TRAMP(6)  TRAMP(7)
-TRAMP(8)  TRAMP(9)  TRAMP(10) TRAMP(11) TRAMP(12) TRAMP(13) TRAMP(14) TRAMP(15)
-TRAMP(16) TRAMP(17) TRAMP(18) TRAMP(19) TRAMP(20) TRAMP(21) TRAMP(22) TRAMP(23)
-TRAMP(24) TRAMP(25) TRAMP(26) TRAMP(27) TRAMP(28) TRAMP(29) TRAMP(30) TRAMP(31)
-TRAMP(32) TRAMP(33) TRAMP(34) TRAMP(35) TRAMP(36) TRAMP(37) TRAMP(38) TRAMP(39)
-TRAMP(40) TRAMP(41) TRAMP(42) TRAMP(43) TRAMP(44) TRAMP(45) TRAMP(46) TRAMP(47)
-TRAMP(48) TRAMP(49) TRAMP(50) TRAMP(51) TRAMP(52) TRAMP(53) TRAMP(54) TRAMP(55)
-TRAMP(56) TRAMP(57) TRAMP(58) TRAMP(59) TRAMP(60) TRAMP(61) TRAMP(62) TRAMP(63)
-
-static JanetCFunction shim_tramp_table[SHIM_MAX_CALLBACKS] = {
-    shim_tramp_0,  shim_tramp_1,  shim_tramp_2,  shim_tramp_3,
-    shim_tramp_4,  shim_tramp_5,  shim_tramp_6,  shim_tramp_7,
-    shim_tramp_8,  shim_tramp_9,  shim_tramp_10, shim_tramp_11,
-    shim_tramp_12, shim_tramp_13, shim_tramp_14, shim_tramp_15,
-    shim_tramp_16, shim_tramp_17, shim_tramp_18, shim_tramp_19,
-    shim_tramp_20, shim_tramp_21, shim_tramp_22, shim_tramp_23,
-    shim_tramp_24, shim_tramp_25, shim_tramp_26, shim_tramp_27,
-    shim_tramp_28, shim_tramp_29, shim_tramp_30, shim_tramp_31,
-    shim_tramp_32, shim_tramp_33, shim_tramp_34, shim_tramp_35,
-    shim_tramp_36, shim_tramp_37, shim_tramp_38, shim_tramp_39,
-    shim_tramp_40, shim_tramp_41, shim_tramp_42, shim_tramp_43,
-    shim_tramp_44, shim_tramp_45, shim_tramp_46, shim_tramp_47,
-    shim_tramp_48, shim_tramp_49, shim_tramp_50, shim_tramp_51,
-    shim_tramp_52, shim_tramp_53, shim_tramp_54, shim_tramp_55,
-    shim_tramp_56, shim_tramp_57, shim_tramp_58, shim_tramp_59,
-    shim_tramp_60, shim_tramp_61, shim_tramp_62, shim_tramp_63,
+static const JanetAbstractType shim_managed_callback_type = {
+    "sharp/callback",
+    NULL,  /* gc */
+    NULL,  /* gcmark */
+    NULL,  /* get */
+    NULL,  /* put */
+    NULL,  /* marshal */
+    NULL,  /* unmarshal */
+    NULL,  /* tostring */
+    NULL,  /* compare */
+    NULL,  /* hash */
+    NULL,  /* next */
+    shim_callback_call,
+    JANET_ATEND_CALL
 };
 
-SHIM_EXPORT int shim_register_callback(ShimManagedCallback cb) {
-    for (int i = 0; i < SHIM_MAX_CALLBACKS; i++) {
-        if (shim_callbacks[i] == NULL) {
-            shim_callbacks[i] = cb;
-            return i;
-        }
-    }
-    return -1;
-}
-
-SHIM_EXPORT void shim_unregister_callback(int slot) {
-    if (slot >= 0 && slot < SHIM_MAX_CALLBACKS) {
-        shim_callbacks[slot] = NULL;
-    }
-}
-
-SHIM_EXPORT Janet shim_wrap_callback(int slot) {
-    if (slot < 0 || slot >= SHIM_MAX_CALLBACKS) return janet_wrap_nil();
-    return janet_wrap_cfunction(shim_tramp_table[slot]);
+SHIM_EXPORT Janet shim_create_callback(ShimManagedCallback cb) {
+    void **data = (void **)janet_abstract(&shim_managed_callback_type, sizeof(void *));
+    *data = (void *)cb;
+    return janet_wrap_abstract(data);
 }
 
 /* === Fibers (Coroutines) ===
