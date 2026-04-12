@@ -6,17 +6,20 @@ namespace JanetSharp;
 /// </summary>
 public sealed class JanetRuntime : IDisposable
 {
-    private static int _instanceCount;
+    [ThreadStatic]
+    private static JanetRuntime? t_activeRuntime;
+    
+    private static int _totalActiveRuntimes;
     private static int _generation;
     private readonly int _ownerThreadId;
     private bool _disposed;
     private JanetModule? _modules;
 
     /// <summary>
-    /// Returns true if a JanetRuntime instance is currently active (VM initialized).
+    /// Returns true if any JanetRuntime instance is currently active (VM initialized).
     /// Used by JanetValue finalizers to avoid calling into a deinitialized VM.
     /// </summary>
-    internal static bool IsActive => Volatile.Read(ref _instanceCount) != 0;
+    internal static bool IsActive => Volatile.Read(ref _totalActiveRuntimes) > 0;
 
     /// <summary>
     /// Monotonically increasing generation counter. Incremented each time a new
@@ -31,23 +34,24 @@ public sealed class JanetRuntime : IDisposable
     public IntPtr CoreEnvironment { get; }
 
     /// <summary>
-    /// Initializes the Janet VM. Throws if another instance is already active.
+    /// Initializes the Janet VM. Throws if another instance is already active on this thread.
     /// </summary>
     public JanetRuntime()
     {
-        if (Interlocked.CompareExchange(ref _instanceCount, 1, 0) != 0)
+        if (t_activeRuntime != null)
             throw new InvalidOperationException(
-                "A JanetRuntime instance is already active. Janet is process-global; only one runtime may exist at a time.");
+                "A JanetRuntime instance is already active on this thread. Only one runtime may exist per thread.");
 
         _ownerThreadId = Environment.CurrentManagedThreadId;
 
         int result = NativeMethods.shim_init();
         if (result != 0)
         {
-            Interlocked.Exchange(ref _instanceCount, 0);
             throw new JanetException($"janet_init failed with code {result}");
         }
 
+        t_activeRuntime = this;
+        Interlocked.Increment(ref _totalActiveRuntimes);
         Interlocked.Increment(ref _generation);
         CoreEnvironment = NativeMethods.shim_core_env();
     }
@@ -160,6 +164,7 @@ public sealed class JanetRuntime : IDisposable
         GC.WaitForPendingFinalizers();
 
         NativeMethods.shim_deinit();
-        Interlocked.Exchange(ref _instanceCount, 0);
+        t_activeRuntime = null;
+        Interlocked.Decrement(ref _totalActiveRuntimes);
     }
 }

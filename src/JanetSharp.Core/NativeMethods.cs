@@ -204,13 +204,7 @@ internal static partial class NativeMethods
     internal delegate int ShimManagedCallback(int argc, IntPtr argv, out long result);
 
     [LibraryImport(LibName)]
-    internal static partial int shim_register_callback(IntPtr cb);
-
-    [LibraryImport(LibName)]
-    internal static partial void shim_unregister_callback(int slot);
-
-    [LibraryImport(LibName)]
-    internal static partial long shim_wrap_callback(int slot);
+    internal static partial long shim_create_callback(IntPtr cb);
 
     // === Fibers (Coroutines) ===
 

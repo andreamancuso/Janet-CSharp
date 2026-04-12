@@ -187,9 +187,9 @@ public class ModuleSystemTests : IDisposable
             return Janet.Nil;
         });
 
-        // Verify the loader is in module/loaders (C# callbacks are cfunctions)
+        // Verify the loader is in module/loaders (C# callbacks are abstracts now)
         var result = _runtime.Eval("(type (get module/loaders :test-loader))");
-        Assert.Equal("cfunction", result.AsString());
+        Assert.Equal("sharp/callback", result.AsString());
         Assert.False(wasInvoked); // Not invoked without a matching path entry
     }
 

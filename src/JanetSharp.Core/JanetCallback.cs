@@ -18,7 +18,6 @@ public sealed class JanetCallback : IDisposable
     private readonly CallbackFunc _userCallback;
     private readonly NativeMethods.ShimManagedCallback _nativeDelegate;
     private readonly GCHandle _delegateHandle;
-    private readonly int _slot;
     private bool _disposed;
 
     /// <summary>
@@ -32,7 +31,6 @@ public sealed class JanetCallback : IDisposable
     /// </summary>
     /// <param name="callback">The C# function to wrap as a Janet CFunction.</param>
     /// <exception cref="ArgumentNullException"><paramref name="callback"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">All 64 callback slots are in use.</exception>
     public JanetCallback(CallbackFunc callback)
     {
         _userCallback = callback ?? throw new ArgumentNullException(nameof(callback));
@@ -46,17 +44,8 @@ public sealed class JanetCallback : IDisposable
         // Get the unmanaged function pointer for the delegate
         var fnPtr = Marshal.GetFunctionPointerForDelegate(_nativeDelegate);
 
-        // Register with the C-side trampoline table
-        _slot = NativeMethods.shim_register_callback(fnPtr);
-        if (_slot < 0)
-        {
-            _delegateHandle.Free();
-            throw new InvalidOperationException(
-                "Maximum number of Janet callbacks (64) reached. Dispose unused callbacks to free slots.");
-        }
-
-        // Get the Janet CFunction value for this slot's trampoline
-        Value = new Janet(NativeMethods.shim_wrap_callback(_slot));
+        // Create the Janet abstract value containing the function pointer
+        Value = new Janet(NativeMethods.shim_create_callback(fnPtr));
     }
 
     /// <summary>
@@ -90,7 +79,6 @@ public sealed class JanetCallback : IDisposable
         if (_disposed) return;
         _disposed = true;
 
-        NativeMethods.shim_unregister_callback(_slot);
         _delegateHandle.Free();
     }
 }
