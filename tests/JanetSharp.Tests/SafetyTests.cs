@@ -439,7 +439,7 @@ public class EdgeCaseTests : IDisposable
     {
         using var arr = JanetArray.Create();
         arr.Clear(); // should not throw
-        Assert.Equal(0, arr.Count);
+        Assert.Empty(arr);
     }
 
     [Fact]
@@ -447,7 +447,7 @@ public class EdgeCaseTests : IDisposable
     {
         using var tbl = JanetTable.Create();
         tbl.Clear();
-        Assert.Equal(0, tbl.Count);
+        Assert.Empty(tbl);
     }
 
     [Fact]

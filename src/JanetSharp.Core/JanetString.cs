@@ -44,6 +44,7 @@ public class JanetString : JanetValue
         return new ReadOnlySpan<byte>((void*)ptr, Length);
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var span = AsSpan();

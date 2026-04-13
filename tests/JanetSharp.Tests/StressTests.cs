@@ -69,7 +69,7 @@ public class StressTests : IDisposable
             for (int i = 0; i < 1000; i++)
                 arr.Pop();
 
-            Assert.Equal(0, arr.Count);
+            Assert.Empty(arr);
         }
     }
 
@@ -88,7 +88,7 @@ public class StressTests : IDisposable
             for (int i = 0; i < 1000; i++)
                 tbl.Remove(Janet.From((double)i));
 
-            Assert.Equal(0, tbl.Count);
+            Assert.Empty(tbl);
         }
     }
 

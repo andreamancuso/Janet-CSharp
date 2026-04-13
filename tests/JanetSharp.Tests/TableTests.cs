@@ -16,7 +16,7 @@ public class JanetTableTests : IDisposable
     public void Create_Empty_HasZeroCount()
     {
         using var tbl = JanetTable.Create();
-        Assert.Equal(0, tbl.Count);
+        Assert.Empty(tbl);
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class JanetTableTests : IDisposable
         using var val = JanetString.Create("Janet");
 
         tbl[key.Value] = val.Value;
-        Assert.Equal(1, tbl.Count);
+        Assert.Single(tbl);
 
         var result = tbl[key.Value];
         Assert.Equal("Janet", result.AsString());
@@ -51,11 +51,11 @@ public class JanetTableTests : IDisposable
         using var key = JanetKeyword.Create("x");
 
         tbl[key.Value] = Janet.From(1.0);
-        Assert.Equal(1, tbl.Count);
+        Assert.Single(tbl);
 
         bool removed = tbl.Remove(key.Value);
         Assert.True(removed);
-        Assert.Equal(0, tbl.Count);
+        Assert.Empty(tbl);
         Assert.False(tbl.ContainsKey(key.Value));
     }
 
@@ -89,7 +89,7 @@ public class JanetTableTests : IDisposable
         Assert.Equal(2, tbl.Count);
 
         tbl.Clear();
-        Assert.Equal(0, tbl.Count);
+        Assert.Empty(tbl);
     }
 
     [Fact]

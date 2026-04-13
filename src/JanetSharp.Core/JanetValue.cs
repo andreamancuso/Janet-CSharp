@@ -106,6 +106,9 @@ public class JanetValue : IDisposable
         }
     }
 
+    /// <summary>
+    /// Finalizer to ensure unrooted values are safely processed by the Janet VM.
+    /// </summary>
     ~JanetValue()
     {
         Dispose(disposing: false);

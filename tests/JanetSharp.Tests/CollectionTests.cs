@@ -16,7 +16,7 @@ public class JanetArrayTests : IDisposable
     public void Create_Empty_HasZeroCount()
     {
         using var arr = JanetArray.Create();
-        Assert.Equal(0, arr.Count);
+        Assert.Empty(arr);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class JanetArrayTests : IDisposable
         arr.Add(Janet.From(20.0));
         var popped = arr.Pop();
         Assert.Equal(20.0, popped.AsNumber());
-        Assert.Equal(1, arr.Count);
+        Assert.Single(arr);
     }
 
     [Fact]
@@ -88,8 +88,8 @@ public class JanetArrayTests : IDisposable
     {
         using var arr = JanetArray.Create();
         arr.Add(Janet.From(42.0));
-        Assert.True(arr.Contains(Janet.From(42.0)));
-        Assert.False(arr.Contains(Janet.From(99.0)));
+        Assert.Contains(Janet.From(42.0), arr);
+        Assert.DoesNotContain(Janet.From(99.0), arr);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class JanetArrayTests : IDisposable
         arr.Add(Janet.From(1.0));
         arr.Add(Janet.From(2.0));
         arr.Clear();
-        Assert.Equal(0, arr.Count);
+        Assert.Empty(arr);
     }
 }
 
@@ -139,7 +139,7 @@ public class JanetTupleTests : IDisposable
     public void Empty_Tuple()
     {
         using var t = JanetTuple.Create();
-        Assert.Equal(0, t.Count);
+        Assert.Empty(t);
     }
 
     [Fact]
