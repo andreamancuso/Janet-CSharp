@@ -96,6 +96,18 @@ Janet x = Janet.From(42.0);  // preferred — zero overhead
 Janet y = 42.0;              // also fine — implicit conversion
 ```
 
+### Implicit Conversions for JanetValue Wrappers
+
+Any subclass of `JanetValue` (like `JanetArray`, `JanetTable`, `JanetFunction`, etc.) can be implicitly converted to the raw `Janet` struct. This makes passing your GC-rooted wrappers into functions seamless:
+
+```csharp
+using var table = JanetTable.Create();
+table["key"] = Janet.From("value");
+
+// Implicit conversion from JanetTable to Janet struct
+runtime.GetFunction("process-data").Invoke(table); 
+```
+
 `JanetConvert.ToJanet()` is useful when the type is only known at runtime (e.g., from reflection or generic code):
 
 ```csharp

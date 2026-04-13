@@ -133,6 +133,27 @@ public class DisposeSafetyTests : IDisposable
         fn.Dispose();
         Assert.Throws<ObjectDisposedException>(() => fn.Invoke(Janet.From(1.0), Janet.From(2.0)));
     }
+    [Fact]
+    public void Finalizer_DeferredUnroot_ProcessedOnEval()
+    {
+        // 1. Create a rooted value in an inner scope so the reference is lost
+        void CreateLostValue()
+        {
+            var table = JanetTable.Create();
+            table["key"] = Janet.From("value");
+        }
+
+        CreateLostValue();
+
+        // 2. Force GC to run the finalizer (which queues the deferred unroot)
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+
+        // 3. Trigger an evaluation to process the deferred unroots
+        // This should run ProcessDeferredUnroots() and NOT crash the thread.
+        var result = _runtime.Eval("nil");
+        Assert.True(result.IsNil);
+    }
 }
 
 // === Invalid Type Conversion Tests ===

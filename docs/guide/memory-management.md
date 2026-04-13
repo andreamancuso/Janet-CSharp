@@ -58,22 +58,21 @@ buf.Dispose();
 If a `JanetValue` is not explicitly disposed, its finalizer will unroot it when the .NET GC collects it. This works but has caveats:
 
 1. **Non-deterministic timing** — the value stays rooted until the .NET GC runs, consuming Janet memory longer than necessary.
-2. **Runtime lifetime** — the finalizer checks that the same runtime is still active before unrooting. If the runtime was already disposed, the finalizer safely skips the unroot call (no crash, but the memory was already freed by `janet_deinit`).
+2. **Deferred Unrooting** — Finalizers run on the .NET GC thread, but Janet is strictly single-threaded. To avoid crashing the Janet VM, the finalizer pushes the pointer to a thread-safe queue. The creating `JanetRuntime` processes this queue automatically before evaluating new scripts or during its own disposal.
 
-## The Generation Counter
+## Cross-Thread Garbage Collection
 
-JanetSharp uses a generation counter to handle a subtle race condition:
+Because `JanetRuntime` supports multiple thread-local instances, finalizers must handle unrooting safely across threads.
 
 ```
-Runtime A created (generation 1)
-  → JanetValue X created, records generation 1
+Runtime A created on Thread 1
+  → JanetValue X created, records reference to Runtime A
 Runtime A disposed (calls janet_deinit — all Janet memory freed)
-Runtime B created (generation 2)
   → .NET GC runs, finalizes JanetValue X
-  → X checks: generation 1 ≠ current generation 2 → skips unroot (safe!)
+  → X checks: Runtime A is disposed? Yes → skips unroot (safe!)
 ```
 
-Without this check, `JanetValue X` would call `shim_gcunroot` on Runtime B's heap with a pointer from Runtime A — an access violation.
+If Runtime A is *still active* when the finalizer runs, calling `janet_gcunroot` directly from the .NET GC thread would crash the single-threaded Janet VM. Instead, the finalizer queues the unrooting operation, and Runtime A processes the queue safely on Thread 1 before its next evaluation.
 
 ## Common Pitfalls
 

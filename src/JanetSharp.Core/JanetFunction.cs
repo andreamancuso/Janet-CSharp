@@ -42,6 +42,8 @@ public class JanetFunction : JanetValue
     /// <returns>The return value of the function.</returns>
     public unsafe Janet Invoke(Janet[] args, out JanetSignal signal)
     {
+        JanetRuntime.t_activeRuntime?.ProcessDeferredUnroots();
+
         var fnPtr = NativeMethods.shim_unwrap_function(Value.RawValue);
         int argc = args.Length;
         int status;

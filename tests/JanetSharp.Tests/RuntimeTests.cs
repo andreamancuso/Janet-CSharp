@@ -132,6 +132,26 @@ public class JanetRuntimeTests
     }
 
     [Fact]
+    public async Task MultipleRuntimes_OnDifferentThreads_Succeeds()
+    {
+        var task1 = Task.Run(() =>
+        {
+            using var runtime = new JanetRuntime();
+            var result = runtime.Eval("(+ 1 2)");
+            Assert.Equal(3.0, result.AsNumber());
+        });
+
+        var task2 = Task.Run(() =>
+        {
+            using var runtime = new JanetRuntime();
+            var result = runtime.Eval("(+ 10 20)");
+            Assert.Equal(30.0, result.AsNumber());
+        });
+
+        await Task.WhenAll(task1, task2);
+    }
+
+    [Fact]
     public void Eval_AfterDispose_Throws()
     {
         var runtime = new JanetRuntime();

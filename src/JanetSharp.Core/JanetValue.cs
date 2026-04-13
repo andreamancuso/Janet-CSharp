@@ -31,6 +31,7 @@ public class JanetValue : IDisposable
     private readonly Janet _value;
     private readonly bool _isRooted;
     private readonly int _generation; // which runtime generation created this value
+    private readonly JanetRuntime? _runtime; // the runtime that created this value
     private int _disposed; // 0 = alive, 1 = disposed (for thread-safe CAS)
 
     /// <summary>
@@ -46,6 +47,11 @@ public class JanetValue : IDisposable
     }
 
     /// <summary>
+    /// Implicitly converts a JanetValue subclass to the raw Janet struct.
+    /// </summary>
+    public static implicit operator Janet(JanetValue value) => value.Value;
+
+    /// <summary>
     /// Creates a GC-safe handle to a Janet value.
     /// Reference types are rooted in Janet's GC; primitives are not.
     /// </summary>
@@ -54,6 +60,7 @@ public class JanetValue : IDisposable
         _value = value;
         _isRooted = value.IsGcType;
         _generation = JanetRuntime.Generation;
+        _runtime = JanetRuntime.t_activeRuntime;
 
         if (_isRooted)
         {
@@ -84,11 +91,18 @@ public class JanetValue : IDisposable
             return;
 
         // Only unroot if the SAME runtime that created this value is still active.
-        // If a different runtime (or no runtime) is active, the memory is already freed
-        // by janet_deinit. Calling shim_gcunroot would be an access violation.
-        if (_isRooted && JanetRuntime.IsActive && JanetRuntime.Generation == _generation)
+        if (_isRooted && JanetRuntime.IsActive && JanetRuntime.Generation == _generation && _runtime != null)
         {
-            NativeMethods.shim_gcunroot(_value.RawValue);
+            if (disposing)
+            {
+                // Manual Dispose(): safe to unroot synchronously
+                NativeMethods.shim_gcunroot(_value.RawValue);
+            }
+            else
+            {
+                // Finalizer Thread: deferred unrooting to avoid crashing the Janet thread
+                _runtime.EnqueueDeferredUnroot(_value.RawValue);
+            }
         }
     }
 

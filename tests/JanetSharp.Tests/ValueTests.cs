@@ -120,6 +120,31 @@ public class JanetValueTests : IDisposable
     }
 
     [Fact]
+    public void ImplicitOperator_JanetValue_To_Janet_Works()
+    {
+        using var table = JanetTable.Create();
+        // Implicitly converts JanetTable (JanetValue) to Janet struct
+        Janet raw = table; 
+        Assert.Equal(JanetType.Table, raw.Type);
+    }
+
+    [Fact]
+    public void AsTable_OnTableValue_ReturnsWrapper()
+    {
+        var raw = _runtime.Eval("@{}");
+        using var table = raw.AsTable();
+        Assert.NotNull(table);
+    }
+
+    [Fact]
+    public void AsArray_OnArrayValue_ReturnsWrapper()
+    {
+        var raw = _runtime.Eval("@[]");
+        using var array = raw.AsArray();
+        Assert.NotNull(array);
+    }
+
+    [Fact]
     public void Dispose_IsIdempotent()
     {
         var val = new JanetValue(Janet.From(1.0));

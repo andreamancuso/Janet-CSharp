@@ -7,13 +7,14 @@ namespace JanetSharp;
 public sealed class JanetRuntime : IDisposable
 {
     [ThreadStatic]
-    private static JanetRuntime? t_activeRuntime;
+    internal static JanetRuntime? t_activeRuntime;
     
     private static int _totalActiveRuntimes;
     private static int _generation;
     private readonly int _ownerThreadId;
     private bool _disposed;
     private JanetModule? _modules;
+    private readonly System.Collections.Concurrent.ConcurrentQueue<long> _pendingUnroots = new();
 
     /// <summary>
     /// Returns true if any JanetRuntime instance is currently active (VM initialized).
@@ -56,6 +57,19 @@ public sealed class JanetRuntime : IDisposable
         CoreEnvironment = NativeMethods.shim_core_env();
     }
 
+    internal void EnqueueDeferredUnroot(long rawValue)
+    {
+        _pendingUnroots.Enqueue(rawValue);
+    }
+
+    internal void ProcessDeferredUnroots()
+    {
+        while (_pendingUnroots.TryDequeue(out long rawValue))
+        {
+            NativeMethods.shim_gcunroot(rawValue);
+        }
+    }
+
     /// <summary>
     /// Evaluates a Janet source string and returns the result.
     /// Throws <see cref="JanetException"/> if evaluation produces an error signal.
@@ -82,6 +96,7 @@ public sealed class JanetRuntime : IDisposable
     {
         CheckThread();
         CheckDisposed();
+        ProcessDeferredUnroots();
 
         int status = NativeMethods.shim_dostring(CoreEnvironment, code, out long rawResult);
         signal = (JanetSignal)status;
@@ -162,6 +177,8 @@ public sealed class JanetRuntime : IDisposable
         // get their shim_gcunroot calls while the VM is still alive.
         GC.Collect();
         GC.WaitForPendingFinalizers();
+
+        ProcessDeferredUnroots();
 
         NativeMethods.shim_deinit();
         t_activeRuntime = null;
