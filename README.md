@@ -14,6 +14,10 @@ A .NET bridge for embedding the [Janet](https://janet-lang.org/) programming lan
 - **GC-safe smart pointers** — `JanetValue` roots/unroots references in Janet's GC automatically
 - **Cross-platform** — native shim builds for Windows, Linux, and macOS via CMake
 
+## Used By
+
+**[Guida](https://guida-app.dev)**, a programmable desktop browser and automation platform.
+
 ## Quick Start
 
 ```csharp
